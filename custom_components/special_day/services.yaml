@@ -1,0 +1,3 @@
+reload_rules:
+  name: Reload rules
+  description: Validate and reload the personal rules file, retaining working rules if validation fails.

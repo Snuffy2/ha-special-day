@@ -1,122 +1,164 @@
-# special-day
-Home Assistant script to work out if today is a 'special day'.
+# Special Day
 
-# Description
+A small Home Assistant custom integration that calculates today's occasions and
+creates its own entities. Personal holiday rules live in a separate JSON file so
+integration updates do not overwrite your changes.
 
-Check if today is a special day against a set of calculated and pre-set
-special days and set a text helper with the description of the day, and
-a boolean helper if the day is special.
+## Install
 
-The special days are defined in a dictionary in the script, and can be
-modified to add or remove special days as needed. The script also
-calculates the date of Easter for the current year, and uses that to
-determine the dates of Easter-related special days.
+Requires Home Assistant **2026.10 or newer** (Python 3.14.2 or newer).
 
-## Features
+1. Copy `custom_components/special_day` into your Home Assistant
+   `/config/custom_components/` folder.
+2. Restart Home Assistant to discover the integration.
+3. Open **Settings → Devices & services → Add integration → Special Day**.
+4. Leave the rules file blank for the bundled defaults, or enter the path of an
+   existing personal JSON file relative to `/config`. Optionally select calendars.
 
-- Calculates the date of Easter for the current year.
-- Supports custom special days defined in a dictionary.
-- Automatically updates helper variables in Home Assistant.
+The integration supports one configuration and creates:
 
-## Usage
+| Entity | Purpose |
+| --- | --- |
+| `binary_sensor.special_day` | On when at least one occasion applies today |
+| `sensor.special_day_description` | Text suitable for “today is …” |
 
-This script should be used by triggering it in Home Assistant to check
-for special days and set the appropriate helper variables.
-It should be run daily at specific times to ensure the helpers are updated.
+Entity IDs can differ if those names are already taken. Both entities expose
+`events` (the complete list), `description` (the full text), `last_checked`
+(a timestamp), and `calendar_errors` (calendar entity IDs that could not be read).
+The description state is limited to 255 characters; its attributes retain the
+complete text.
 
-## Requirements
+Status refreshes at setup, local midnight, every 15 minutes, and when rules are
+reloaded. No helpers or daily script automation are required.
 
-Requires three Home Assistnt helpers to be defined:
-```text
-  input_boolean.special_day - set to true if today is a special day, or false
-  input_text.special_day_text - set to the text description, or empty
-  input_datetime.special_day_last_checked - date of last execution
+## Personal rules
+
+Create `/config/special_day_rules.json`, for example:
+
+```json
+{
+  "include_defaults": true,
+  "rules": {
+    "Our anniversary": "14/7",
+    "Pancake Day": "Easter-47d",
+    "Thanksgiving": "1/11+4@thu",
+    "Black Friday": "Thanksgiving+1d"
+  },
+  "exclude": ["Blue Monday"],
+  "bank_holidays": true,
+  "seasonal_fallbacks": true
+}
 ```
 
-## Special Day Syntax
+Choose `special_day_rules.json` during setup or through the integration's
+**Configure** screen. Files must be inside the Home Assistant config folder;
+keep them outside `custom_components/special_day` so updates preserve them.
 
-The special_days dictionary uses the following syntax to specify a date:
-```text
-<base> [ ± <count><unit>[@<weekday>] ]
+`rules` adds occasions or replaces a bundled expression by exact name.
+`exclude` hides names, including calculated bank holidays or seasonal fallback
+names. Excluded rules remain usable as date references. `include_defaults: false`
+starts with an empty date-rule list. The `bank_holidays` and `seasonal_fallbacks`
+switches separately control the calculated UK substitute holidays and Lent/Advent
+fallback descriptions; set both to `false` for a wholly personal calendar.
+All three switches default to `true`, and `rules` and `exclude` default to empty.
+Unknown settings and malformed entries are rejected.
+
+After editing the file, run **Developer tools → Actions → Special Day: Reload
+rules** (`special_day.reload_rules`). It validates the whole file, recalculates
+today, and updates both entities. An invalid file produces an error identifying
+the problem and leaves the previous working rules and state intact. Automatic
+refresh continues using those working rules. The file must be corrected before
+restarting Home Assistant, because only the on-disk configuration survives a
+restart. Editing the file alone does not reload it.
+
+### Date expressions
+
+Use a base date (`D/M`), `Easter` (Gregorian Easter Sunday), or another rule's exact
+name, followed by optional offsets. Fixed dates recur annually. A February 29 rule
+is skipped in non-leap years. Named references cannot be circular. Total offsets along a reference chain are
+limited to a conservative 3,660-day bound (months count as 31 days for this check).
+
+| Expression | Meaning |
+| --- | --- |
+| `25/12` | December 25 |
+| `Easter-47d` | 47 days before Easter |
+| `6/5+2w` | Two weeks after May 6 |
+| `31/1+1m` | One calendar month later, clamped to the last day of February |
+| `1/5+1@mon` | First Monday on or after May 1 |
+| `31/3-1@sun` | Last Sunday on or before March 31 |
+| `1/11+4@thu+1d` | Friday following the fourth Thursday of November |
+| `Thanksgiving+1d` | One day after the rule named Thanksgiving |
+
+Weekday names are `mon`, `tue`, `wed`, `thu`, `fri`, `sat`, `sun` (case insensitive).
+Weekday occurrences are inclusive: `+1@mon` returns the base date if it is Monday.
+For compatibility with the original script, `+3w@mon` means Monday in the third
+calendar week of the base month, where week one contains the first of the month
+and starts on Monday. `-1w@mon` means the last Monday in the base month. Prefer
+`+3@mon` for the third Monday on or after a specific date. Day and month offsets
+cannot be combined directly with `@weekday`; chain separate offsets instead.
+
+The bundled list retains the original script's UK-oriented holidays, meteor
+shower dates, Easter-related days, substitute bank holidays, and Lent/Advent
+fallbacks. Black Friday now follows Thanksgiving, including years when it falls
+on the fifth Friday in November. Month offsets are implemented. These are annual
+rules, not an authoritative feed of exceptional public-holiday changes; use
+personal overrides or calendar events for one-off occasions.
+
+## Calendars and announcements
+
+Selected calendars contribute **all-day events** overlapping today, including
+multi-day events; an event's end date is exclusive. All matching events are read,
+merged with calculated occasions, and deduplicated by exact name. Timed
+appointments are ignored. A calendar occasion suppresses the generic Lent/Advent
+fallback, just as a named holiday does. Changes to calendar events appear within
+15 minutes, or immediately when you run Reload rules.
+
+If a calendar is unavailable or times out, local rules still work. The integration
+logs a warning and lists the failed calendar in `calendar_errors`; it retries on
+the next refresh. Calendar events are not cached through failures.
+
+Keep announcements and lighting in separate automations. For example, create a
+UI automation with a daily **Time** trigger at 08:00, a **State** condition that
+`binary_sensor.special_day` is `on`, and your announcement action using the
+sensor's `description` attribute. Status is already current at midnight; checking
+it never announces anything. If you need only one announcement per day across
+multiple triggers, manage that in the announcement automation with a date helper.
+
+## Migrating from the script
+
+The original [special_day.yaml](special_day.yaml) remains available as a legacy
+script. It is independent of this integration and requires all three helpers:
+`input_boolean.special_day`, `input_text.special_day_text`, and
+`input_datetime.special_day_last_checked`.
+
+To migrate:
+
+1. Move personal name/date entries from the script's `special_days` dictionary to
+   the JSON file's `rules` object. Use `exclude` for bundled names you removed.
+2. Set up the integration and verify its entities and occasions.
+3. Update automations, scripts, and dashboards from `input_boolean.special_day`
+   to the new binary sensor, and from `input_text.special_day_text` to the new
+   description sensor (or its full `description` attribute).
+4. Remove calls to `script.check_for_special_day` from announcement and lighting
+   automations. Schedule those actions independently.
+5. Disable the old daily check automation and remove its helpers only after
+   checking that no other automations reference them.
+
+The old last-checked helper controlled script/announcement execution. The new
+`last_checked` attribute is informational; it does not deduplicate announcements.
+The integration does not import or rename existing helpers automatically.
+
+## Development
+
+```sh
+uv sync
+./.venv/bin/pytest -q
+./.venv/bin/ruff check .
+./.venv/bin/ruff format --check .
+./.venv/bin/mypy
+./.venv/bin/prek run --all-files
 ```
-where:
-```text
-  base        Base date or Easter (Easter, 1/5, 25/12)
-  ±           Plus or minus
-  <count>     Integer number (3, 1, 4)
-  <unit>      d, w, or m (+3d, -1w)
-  @<weekday>  Optional weekday for that offset (@Mon, @Sun)
-```
 
-Some examples:
-```text
-Easter+39d - 39 days after Easter
-1/5+1@Mon - First Monday after 1st May
-1/7+3w@Mon - Monday in the third week of July
-25/12-4@Sun - 4th Sunday before Christmas
-31/3-1@Sun - Last Sunday of March (use end-of-month base, not 1/4, to avoid edge case when 1 Apr is Sunday)
-6/5+2w - 2 weeks after the 6th of May
-```
-
-# Install
-A script, just paste the script into Home Assistant. It sets two 'helpers' that you will need to create before you run it, `input_text.special_day_text` is a text helper (100 characters is fine) that will contain the text describing the 'day' and is worded to complete the phrase 'today is...', and `input_boolean.special_day` is a toggle helper that is turned on if today is a 'special day' and off if it isn't.
-
-It's run once a day, so it's not designed to be a super optimal script - it's written to be REALLY simple to read and add and play with over time - so everything is very 'wordy' for a reason.
-
-## Example Automation
-
-```yaml
-alias: Daily Special Day Check
-trigger:
-  - platform: time
-    at: '00:00:00'
-action:
-  - service: script.check_for_special_day
-mode: single
-``` 
-
-## How I run it
-
-The script will check a datetime helper to make sure it only runs once a day. You can set the `force` field to make it run regardless.
-
-If you create a calendar in Home Assistant called `Special Days` you can also put all day events in there and they will be picked up if you
-uncomment the marked bit of the script. I use that to let the family add things and to track birthdays when you want them to fire at midnight.
-
-Here is the automation I use to trigger the script, if it fires at midnight to say 'Happy Birthday' then it's still safe to run at 08:00 because the
-datetime helper check will stop it running. If it hasn't been triggered at mignight then normal 08:00 execution happens.
-
-This means things like birthdays result in the input_boolean.special_day being turned on at midnight from the Special Days calendar, and less
-personal things like 'Bank Holiday' get notified at 08:00.
-
-```yaml
-alias: Special Day Controller
-description: >-
-  Check for a special day, either in the Special Days calendar, or by running
-  the Check For Special Days script and set up the Special Day colours.
-triggers:
-  - trigger: time
-    at: "08:00:00"
-    id: Time
-  - entity_id:
-      - calendar.special_days
-    trigger: state
-    to: "on"
-    from: "off"
-    id: Calendar
-  - entity_id: input_boolean.special_days_active
-    trigger: state
-    id: Switch
-conditions: []
-actions:
-  - action: script.check_for_special_day
-    data: {}
-  - action: script.special_day_colour_set
-    data: {}
-  - action: script.special_day_announce
-    metadata: {}
-    data: {}
-mode: single
-```
-
-The `script.special_day_colour_set` and `script.special_day_announce` are simple little scripts that set the colour of our outside house lights to 
-match the special day when they come on in the evening, and the announce simply says 'Its `input_text.special_day_text`' over our Alexa's.
+The tests load the real Home Assistant integration and entity platforms and cover
+configuration, rule reload rollback, midnight updates, calendars, and unload, as
+well as the pure date evaluator. `uv.lock` pins the validation environment.

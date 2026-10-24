@@ -1,0 +1,12 @@
+{
+  "domain": "special_day",
+  "name": "Special Day",
+  "codeowners": [],
+  "config_flow": true,
+  "documentation": "https://github.com/philmale/special-day",
+  "integration_type": "helper",
+  "iot_class": "local_polling",
+  "after_dependencies": ["calendar"],
+  "requirements": [],
+  "version": "0.1.0"
+}
