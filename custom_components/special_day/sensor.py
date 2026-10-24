@@ -13,10 +13,14 @@ async def async_setup_entry(
     entry: SpecialDayConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Create the description entity automatically."""
-    async_add_entities(
-        [SpecialDaySensor(entry.runtime_data, entry.entry_id, "description")]
-    )
+    """Create the description entity automatically.
+
+    Args:
+        hass (HomeAssistant): Home Assistant instance.
+        entry (SpecialDayConfigEntry): Integration configuration entry.
+        async_add_entities (AddEntitiesCallback): Callback for registering the platform entities.
+    """
+    async_add_entities([SpecialDaySensor(entry.runtime_data, entry.entry_id, "description")])
 
 
 class SpecialDaySensor(SpecialDayEntity, SensorEntity):
@@ -26,5 +30,9 @@ class SpecialDaySensor(SpecialDayEntity, SensorEntity):
 
     @property
     def native_value(self) -> str:
-        """Respect Home Assistant's 255-character state limit."""
+        """Respect Home Assistant's 255-character state limit.
+
+        Returns:
+            str: Description limited to the state length supported by Home Assistant.
+        """
         return self.coordinator.data.description[:255]

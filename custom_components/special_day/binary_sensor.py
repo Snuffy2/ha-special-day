@@ -13,10 +13,14 @@ async def async_setup_entry(
     entry: SpecialDayConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Create the status entity automatically."""
-    async_add_entities(
-        [SpecialDayBinarySensor(entry.runtime_data, entry.entry_id, "status")]
-    )
+    """Create the status entity automatically.
+
+    Args:
+        hass (HomeAssistant): Home Assistant instance.
+        entry (SpecialDayConfigEntry): Integration configuration entry.
+        async_add_entities (AddEntitiesCallback): Callback for registering the platform entities.
+    """
+    async_add_entities([SpecialDayBinarySensor(entry.runtime_data, entry.entry_id, "status")])
 
 
 class SpecialDayBinarySensor(SpecialDayEntity, BinarySensorEntity):
@@ -26,5 +30,9 @@ class SpecialDayBinarySensor(SpecialDayEntity, BinarySensorEntity):
 
     @property
     def is_on(self) -> bool:
-        """Return today's status."""
+        """Return today's status.
+
+        Returns:
+            bool: Whether at least one occasion applies today.
+        """
         return bool(self.coordinator.data.events)

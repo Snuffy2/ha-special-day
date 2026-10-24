@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import json
 from datetime import date
+import json
 from pathlib import Path
 
 import pytest
@@ -12,12 +12,22 @@ from custom_components.special_day.rules import RuleError, Rules, load_rules
 
 
 def _load(tmp_path: Path, config: dict[str, object]) -> Rules:
+    """Write temporary JSON configuration and compile its rules.
+
+    Args:
+        tmp_path (Path): Temporary directory for the configuration file.
+        config (dict[str, object]): External configuration values.
+
+    Returns:
+        Rules: Compiled rules loaded from the temporary file.
+    """
     path = tmp_path / "rules.json"
     path.write_text(json.dumps(config), encoding="utf-8")
     return load_rules(path)
 
 
 def test_defaults_calculate_easter_and_correct_black_friday() -> None:
+    """Check Easter calculations and the corrected Black Friday rule."""
     rules = load_rules()
 
     assert "Good Friday" in rules.events_on(date(2024, 3, 29))
@@ -27,6 +37,11 @@ def test_defaults_calculate_easter_and_correct_black_friday() -> None:
 
 
 def test_inclusive_and_legacy_week_weekday_offsets(tmp_path: Path) -> None:
+    """Check inclusive nth weekday and legacy week-based weekday offsets.
+
+    Args:
+        tmp_path (Path): Temporary directory for the JSON configuration.
+    """
     rules = _load(
         tmp_path,
         {
@@ -46,6 +61,11 @@ def test_inclusive_and_legacy_week_weekday_offsets(tmp_path: Path) -> None:
 
 
 def test_leap_day_month_clamping_and_cross_year_offsets(tmp_path: Path) -> None:
+    """Check leap-day rules, end-of-month clamping, and New Year crossings.
+
+    Args:
+        tmp_path (Path): Temporary directory for the JSON configuration.
+    """
     rules = _load(
         tmp_path,
         {
@@ -69,6 +89,11 @@ def test_leap_day_month_clamping_and_cross_year_offsets(tmp_path: Path) -> None:
 
 
 def test_overrides_exclusions_and_bank_holiday_switch(tmp_path: Path) -> None:
+    """Check external overrides, exclusions, and UK bank holiday controls.
+
+    Args:
+        tmp_path (Path): Temporary directory for the JSON configuration.
+    """
     rules = _load(
         tmp_path,
         {
@@ -87,6 +112,11 @@ def test_overrides_exclusions_and_bank_holiday_switch(tmp_path: Path) -> None:
 
 
 def test_lent_and_advent_fallbacks_can_be_disabled_or_excluded(tmp_path: Path) -> None:
+    """Check seasonal fallbacks and their caller and configuration controls.
+
+    Args:
+        tmp_path (Path): Temporary directory for the JSON configuration.
+    """
     rules = load_rules()
     assert rules.events_on(date(2024, 3, 7)) == ["the 20th day of Lent"]
     assert rules.events_on(date(2024, 12, 2)) == ["the 2nd day of Advent"]
@@ -119,6 +149,13 @@ def test_lent_and_advent_fallbacks_can_be_disabled_or_excluded(tmp_path: Path) -
 def test_invalid_rules_raise_entry_specific_errors(
     tmp_path: Path, rules: dict[str, str], message: str
 ) -> None:
+    """Reject malformed expressions, references, cycles, and large offsets.
+
+    Args:
+        tmp_path (Path): Temporary directory for the JSON configuration.
+        rules (dict[str, str]): Invalid rule set to load.
+        message (str): Expected text in the resulting error.
+    """
     with pytest.raises(RuleError, match=message):
         _load(
             tmp_path,
@@ -127,7 +164,12 @@ def test_invalid_rules_raise_entry_specific_errors(
 
 
 def test_configuration_types_and_unknown_keys_are_rejected(tmp_path: Path) -> None:
-    with pytest.raises(RuleError, match="bank_holidays.*boolean"):
+    """Reject invalid config values and unsupported configuration keys.
+
+    Args:
+        tmp_path (Path): Temporary directory for the JSON configuration.
+    """
+    with pytest.raises(RuleError, match=r"bank_holidays.*boolean"):
         _load(tmp_path, {"bank_holidays": "yes"})
     with pytest.raises(RuleError, match="unknown key"):
         _load(tmp_path, {"surprise": True})

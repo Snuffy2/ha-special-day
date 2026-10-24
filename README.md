@@ -155,10 +155,18 @@ uv sync
 ./.venv/bin/pytest -q
 ./.venv/bin/ruff check .
 ./.venv/bin/ruff format --check .
-./.venv/bin/mypy
+./.venv/bin/mypy custom_components tests
 ./.venv/bin/prek run --all-files
 ```
 
 The tests load the real Home Assistant integration and entity platforms and cover
 configuration, rule reload rollback, midnight updates, calendars, and unload, as
 well as the pure date evaluator. `uv.lock` pins the validation environment.
+
+Tooling and GitHub workflows follow the local Places integration baseline. The
+`ha`, `lint`, `pytest`, and `dev` dependency groups share the same lockfile. Run
+`./.venv/bin/prek run --all-files` to apply and check the configured hooks in
+`prek.toml`. GitHub workflows cover lint autofixes, tests and coverage, lockfile
+consistency, Hassfest/HACS validation, dependency updates, PR labels and titles,
+and releases. See [.github/RELEASING.md](.github/RELEASING.md) for release behavior
+and the repository secrets used by the inherited automation.

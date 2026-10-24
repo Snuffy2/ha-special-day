@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import calendar
-import json
-import re
 from dataclasses import dataclass
 from datetime import date, timedelta
+import json
 from pathlib import Path
+import re
 from typing import Any
 
 
@@ -18,9 +18,7 @@ class RuleError(ValueError):
 _DEFAULTS_PATH = Path(__file__).with_name("defaults.json")
 _WEEKDAYS = {"mon": 1, "tue": 2, "wed": 3, "thu": 4, "fri": 5, "sat": 6, "sun": 7}
 _DATE_BASE = re.compile(r"^(\d{1,2})/(\d{1,2})")
-_OFFSET = re.compile(
-    r"([+-])(\d+)?(d|w|m(?!on))?@?(mon|tue|wed|thu|fri|sat|sun)?", re.IGNORECASE
-)
+_OFFSET = re.compile(r"([+-])(\d+)?(d|w|m(?!on))?@?(mon|tue|wed|thu|fri|sat|sun)?", re.IGNORECASE)
 _MAX_CUMULATIVE_OFFSET_DAYS = 3660
 
 
@@ -50,6 +48,15 @@ class Rules:
         seasonal_fallbacks: bool,
         anchor_radius: int,
     ) -> None:
+        """Initialize compiled calendar rules.
+
+        Args:
+            expressions (dict[str, _Expression]): Parsed annual rule expressions.
+            excluded (frozenset[str]): Event names omitted from results.
+            bank_holidays (bool): Whether UK substitute bank holidays are enabled.
+            seasonal_fallbacks (bool): Whether Lent and Advent labels are enabled.
+            anchor_radius (int): Number of adjacent anchor years to evaluate.
+        """
         self._expressions = expressions
         self._excluded = excluded
         self._bank_holidays = bank_holidays
@@ -64,12 +71,18 @@ class Rules:
         when there are no other events and ``include_fallback`` is true.
         Callers with an external calendar event can pass false to preserve
         the legacy fallback suppression behavior.
+
+        Args:
+            day (date): Calendar date to evaluate.
+            include_fallback (bool): Whether to include a seasonal fallback when
+                no bank holiday or named rule matches.
+
+        Returns:
+            list[str]: Event names for the requested date.
         """
         events: list[str] = []
         if self._bank_holidays:
-            events.extend(
-                name for name in _bank_holidays_on(day) if name not in self._excluded
-            )
+            events.extend(name for name in _bank_holidays_on(day) if name not in self._excluded)
 
         cache: dict[tuple[str, int], date | None] = {}
         for name in self._expressions:
@@ -97,15 +110,22 @@ def load_rules(path: Path | None = None) -> Rules:
     The external object accepts ``include_defaults``, ``rules``, ``exclude``,
     ``bank_holidays`` and ``seasonal_fallbacks``. Rule expressions support
     fixed ``D/M`` dates, Easter, named rule references, and chained offsets.
+
+    Args:
+        path (Path | None): Optional JSON configuration path.
+
+    Returns:
+        Rules: Compiled bundled and external calendar rules.
+
+    Raises:
+        RuleError: The file cannot be read or contains invalid configuration.
     """
     defaults = _read_json(_DEFAULTS_PATH, "bundled defaults")
     if not isinstance(defaults, dict) or not all(
         isinstance(name, str) and isinstance(expression, str)
         for name, expression in defaults.items()
     ):
-        raise RuleError(
-            "bundled defaults must be an object of rule name to expression strings"
-        )
+        raise RuleError("bundled defaults must be an object of rule name to expression strings")
 
     config: dict[str, Any] = {}
     if path is not None:
@@ -122,9 +142,7 @@ def load_rules(path: Path | None = None) -> Rules:
     }
     unknown_keys = set(config) - allowed
     if unknown_keys:
-        raise RuleError(
-            f"configuration has unknown key(s): {', '.join(sorted(unknown_keys))}"
-        )
+        raise RuleError(f"configuration has unknown key(s): {', '.join(sorted(unknown_keys))}")
 
     include_defaults = _boolean(config, "include_defaults", True)
     bank_holidays = _boolean(config, "bank_holidays", True)
@@ -136,9 +154,7 @@ def load_rules(path: Path | None = None) -> Rules:
         _validate_rule_entry(name, expression, "configuration")
 
     exclusions = config.get("exclude", [])
-    if not isinstance(exclusions, list) or any(
-        not isinstance(name, str) for name in exclusions
-    ):
+    if not isinstance(exclusions, list) or any(not isinstance(name, str) for name in exclusions):
         raise RuleError("configuration entry 'exclude' must be a list of names")
     if any(not name.strip() for name in exclusions):
         raise RuleError("configuration entry 'exclude' contains an empty name")
@@ -202,13 +218,9 @@ def _boolean(config: dict[str, Any], key: str, default: bool) -> bool:
 
 def _validate_rule_entry(name: object, expression: object, source: str) -> None:
     if not isinstance(name, str) or not name.strip() or name != name.strip():
-        raise RuleError(
-            f"{source} rule name must be a non-empty string without outer whitespace"
-        )
+        raise RuleError(f"{source} rule name must be a non-empty string without outer whitespace")
     if name.casefold() == "easter":
-        raise RuleError(
-            f"{source} rule 'Easter' conflicts with the built-in Easter base"
-        )
+        raise RuleError(f"{source} rule 'Easter' conflicts with the built-in Easter base")
     if not isinstance(expression, str) or not expression.strip():
         raise RuleError(f"{source} rule {name!r} expression must be a non-empty string")
 
@@ -223,13 +235,9 @@ def _parse_expression(name: str, expression: str, rules: dict[str, str]) -> _Exp
     if fixed:
         day, month = int(fixed.group(1)), int(fixed.group(2))
         try:
-            date(
-                2000, month, day
-            )  # Leap-day expressions are valid in leap anchor years.
+            date(2000, month, day)  # Leap-day expressions are valid in leap anchor years.
         except ValueError as error:
-            raise RuleError(
-                f"rule {name!r} has invalid fixed date {fixed.group(0)!r}"
-            ) from error
+            raise RuleError(f"rule {name!r} has invalid fixed date {fixed.group(0)!r}") from error
         kind, base, suffix = "fixed", (month, day), value[fixed.end() :]
     elif (
         value.casefold() == "easter"
@@ -253,8 +261,7 @@ def _parse_expression(name: str, expression: str, rules: dict[str, str]) -> _Exp
         )
         if reference is None:
             raise RuleError(
-                f"rule {name!r} has unknown base or named rule reference "
-                f"in {expression!r}"
+                f"rule {name!r} has unknown base or named rule reference in {expression!r}"
             )
         kind, base, suffix = "reference", reference, value[len(reference) :]
 
@@ -272,9 +279,7 @@ def _parse_offsets(name: str, suffix: str) -> tuple[_Offset, ...]:
             break
         match = _OFFSET.match(suffix, position)
         if match is None or match.end() == position:
-            raise RuleError(
-                f"rule {name!r} has invalid suffix near {suffix[position:]!r}"
-            )
+            raise RuleError(f"rule {name!r} has invalid suffix near {suffix[position:]!r}")
         sign, amount_text, unit, weekday = match.groups()
         unit = unit.lower() if unit else None
         weekday = weekday.lower() if weekday else None
@@ -286,27 +291,29 @@ def _parse_offsets(name: str, suffix: str) -> tuple[_Offset, ...]:
         if amount > _MAX_CUMULATIVE_OFFSET_DAYS:
             raise RuleError(f"rule {name!r} offset amounts cannot exceed 3660")
         if amount == 0 and weekday is not None:
-            amount = (
-                1  # The legacy template treated an omitted/zero weekday ordinal as one.
-            )
+            amount = 1  # The legacy template treated an omitted/zero weekday ordinal as one.
         if amount <= 0:
             raise RuleError(f"rule {name!r} offset amounts must be positive")
         if unit in {"d", "m"} and weekday is not None:
-            raise RuleError(
-                f"rule {name!r} cannot combine a {unit!r} offset with a weekday"
-            )
+            raise RuleError(f"rule {name!r} cannot combine a {unit!r} offset with a weekday")
         offsets.append(_Offset(1 if sign == "+" else -1, amount, unit or "d", weekday))
         position = match.end()
     if sum(_offset_bound(offset) for offset in offsets) > _MAX_CUMULATIVE_OFFSET_DAYS:
         raise RuleError(
-            f"rule {name!r} cumulative offset exceeds "
-            f"{_MAX_CUMULATIVE_OFFSET_DAYS} days"
+            f"rule {name!r} cumulative offset exceeds {_MAX_CUMULATIVE_OFFSET_DAYS} days"
         )
     return tuple(offsets)
 
 
 def _offset_bound(offset: _Offset) -> int:
-    """Return a conservative calendar-day bound for one offset."""
+    """Return a conservative calendar-day bound for one offset.
+
+    Args:
+        offset (_Offset): Parsed offset to bound.
+
+    Returns:
+        int: Maximum estimated day movement caused by the offset.
+    """
     if offset.weekday is not None and offset.unit == "w":
         return 31 + 7 * offset.amount
     if offset.weekday is not None or offset.unit == "w":
@@ -323,16 +330,14 @@ def _validate_cycles(expressions: dict[str, _Expression]) -> None:
     def visit(name: str, chain: list[str]) -> None:
         if name in visiting:
             start = chain.index(name)
-            raise RuleError(
-                f"cyclic rule reference: {' -> '.join(chain[start:] + [name])}"
-            )
+            raise RuleError(f"cyclic rule reference: {' -> '.join([*chain[start:], name])}")
         if name in visited:
             return
         visiting.add(name)
         expression = expressions[name]
         if expression.kind == "reference":
             target = str(expression.value)
-            visit(target, chain + [target])
+            visit(target, [*chain, target])
         visiting.remove(name)
         visited.add(name)
 
@@ -356,7 +361,8 @@ def _evaluate(
     if expression.kind == "easter":
         result: date | None = _easter(year)
     elif expression.kind == "fixed":
-        assert isinstance(expression.value, tuple)
+        if not isinstance(expression.value, tuple):
+            raise RuleError(f"compiled fixed rule {name!r} has an invalid date")
         month, fixed_day = expression.value
         try:
             result = date(year, month, fixed_day)
@@ -394,9 +400,7 @@ def _apply_offset(day: date, offset: _Offset) -> date:
         month_end = day.replace(day=calendar.monthrange(day.year, day.month)[1])
         if offset.direction > 0:
             week_one_monday = month_start - timedelta(days=month_start.isoweekday() - 1)
-            return week_one_monday + timedelta(
-                days=target - 1 + 7 * (offset.amount - 1)
-            )
+            return week_one_monday + timedelta(days=target - 1 + 7 * (offset.amount - 1))
         days_to_last = (month_end.isoweekday() - target) % 7
         last_occurrence = month_end - timedelta(days=days_to_last)
         return last_occurrence - timedelta(days=7 * (offset.amount - 1))
@@ -408,7 +412,14 @@ def _apply_offset(day: date, offset: _Offset) -> date:
 
 
 def _easter(year: int) -> date:
-    """Return Gregorian Easter Sunday using the Meeus/Jones/Butcher algorithm."""
+    """Return Gregorian Easter Sunday using the Meeus/Jones/Butcher algorithm.
+
+    Args:
+        year (int): Gregorian calendar year.
+
+    Returns:
+        date: Easter Sunday in the given year.
+    """
     a = year % 19
     b, c = divmod(year, 100)
     d, e = divmod(b, 4)
@@ -426,30 +437,19 @@ def _bank_holidays_on(day: date) -> list[str]:
     events: list[str] = []
     if day.month == 12 and day.day in (26, 27, 28):
         christmas = date(day.year, 12, 25)
-        if (
-            christmas.weekday() == 5
-            and day.day == 27
-            or christmas.weekday() == 6
-            and day.day == 26
+        if (christmas.weekday() == 5 and day.day == 27) or (
+            christmas.weekday() == 6 and day.day == 26
         ):
             events.append("Christmas Day Bank Holiday")
         if (
-            christmas.weekday() == 5
-            and day.day == 28
-            or christmas.weekday() == 6
-            and day.day == 27
-            or christmas.weekday() == 4
-            and day.day == 28
+            (christmas.weekday() == 5 and day.day == 28)
+            or (christmas.weekday() == 6 and day.day == 27)
+            or (christmas.weekday() == 4 and day.day == 28)
         ):
             events.append("Boxing Day Bank Holiday")
     if day.month == 1:
         new_year = date(day.year, 1, 1)
-        if (
-            new_year.weekday() == 5
-            and day.day == 3
-            or new_year.weekday() == 6
-            and day.day == 2
-        ):
+        if (new_year.weekday() == 5 and day.day == 3) or (new_year.weekday() == 6 and day.day == 2):
             events.append("New Year's Day Bank Holiday")
     return events
 
@@ -473,9 +473,5 @@ def _seasonal_fallback(day: date) -> str | None:
 
 
 def _ordinal(value: int) -> str:
-    suffix = (
-        "th"
-        if 10 <= value % 100 <= 20
-        else {1: "st", 2: "nd", 3: "rd"}.get(value % 10, "th")
-    )
+    suffix = "th" if 10 <= value % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(value % 10, "th")
     return f"{value}{suffix}"
