@@ -4,6 +4,11 @@ A small Home Assistant custom integration that calculates today's occasions and
 creates its own entities. Personal holiday rules live in a separate JSON file so
 integration updates do not overwrite your changes.
 
+This integration originated from [the Special Day project by
+philmale](https://github.com/philmale/special-day). Special thanks to its author
+and contributors for the original script, holiday rules, and date calculations
+that this integration builds on.
+
 ## Install
 
 Requires Home Assistant **2026.10 or newer** (Python 3.14.2 or newer).
