@@ -1,20 +1,20 @@
 {
-  "title": "Special Day",
+  "title": "ha-special-day",
   "config": {
     "step": {
       "user": {
-        "title": "Special Day",
+        "title": "ha-special-day",
         "description": "Leave the rules file blank for bundled defaults. A personal JSON file must already exist inside your Home Assistant config folder. Calendars contribute all-day events.",
         "data": {"rules_file": "Personal rules file (relative to config folder)", "calendars": "Calendars"}
       }
     },
     "error": {"invalid_rules": "Cannot load rules: {error}"},
-    "abort": {"already_configured": "Special Day is already configured."}
+    "abort": {"already_configured": "ha-special-day is already configured."}
   },
   "options": {
     "step": {
       "init": {
-        "title": "Special Day options",
+        "title": "ha-special-day options",
         "description": "Choose a personal JSON rules file or leave blank for bundled defaults. Changes are validated before applying.",
         "data": {"rules_file": "Personal rules file (relative to config folder)", "calendars": "Calendars"}
       }

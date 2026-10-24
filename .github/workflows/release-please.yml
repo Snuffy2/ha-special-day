@@ -57,10 +57,10 @@ jobs:
           fi
           RELEASE_VERSION="${RELEASE_TAG#v}"
           gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null
-          test "$(jq -r .version custom_components/special_day/manifest.json)" = "$RELEASE_VERSION"
+          test "$(jq -r .version custom_components/ha_special_day/manifest.json)" = "$RELEASE_VERSION"
           grep -Fx "VERSION = \"$RELEASE_VERSION\"  # x-release-please-version" \
-            custom_components/special_day/const.py
-          git archive --format=zip --output="$RUNNER_TEMP/special_day.zip" \
-            HEAD:custom_components/special_day
-          gh release upload "$RELEASE_TAG" "$RUNNER_TEMP/special_day.zip#special_day.zip" \
+            custom_components/ha_special_day/const.py
+          git archive --format=zip --output="$RUNNER_TEMP/ha_special_day.zip" \
+            HEAD:custom_components/ha_special_day
+          gh release upload "$RELEASE_TAG" "$RUNNER_TEMP/ha_special_day.zip#ha_special_day.zip" \
             --clobber --repo "$GITHUB_REPOSITORY"

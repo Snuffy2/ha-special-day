@@ -40,7 +40,7 @@ rev = "v10.3.0"
 
 [[repos.hooks]]
 id = "cspell"
-files = "(?:\\.md$|custom_components/special_day/translations/en\\.json$)"
+files = "(?:\\.md$|custom_components/ha_special_day/translations/en\\.json$)"
 
 [[repos]]
 repo = "local"

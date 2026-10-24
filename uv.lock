@@ -3030,7 +3030,7 @@ wheels = [
 ]
 
 [[package]]
-name = "special-day"
+name = "ha-special-day"
 source = { virtual = "." }
 
 [package.dev-dependencies]
