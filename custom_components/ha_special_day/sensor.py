@@ -1,4 +1,4 @@
-"""Days until the next holiday after today."""
+"""Days until the next special day after today."""
 
 from typing import Any
 
@@ -16,28 +16,29 @@ async def async_setup_entry(
     entry: SpecialDayConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Create the next-holiday countdown entity automatically.
+    """Create the next special day countdown entity automatically.
 
     Args:
         hass (HomeAssistant): Home Assistant instance.
         entry (SpecialDayConfigEntry): Integration configuration entry.
         async_add_entities (AddEntitiesCallback): Callback for registering the platform entities.
     """
+    # Preserve the registered identity when changing the displayed sensor name.
     async_add_entities([SpecialDaySensor(entry.runtime_data, entry.entry_id, "next_holiday")])
 
 
 class SpecialDaySensor(SpecialDayEntity, SensorEntity):
-    """Count down to the next strictly future holiday."""
+    """Count down to the next strictly future special day."""
 
-    _attr_name = "Next holiday"
+    _attr_name = "Next special day"
     _attr_native_unit_of_measurement = UnitOfTime.DAYS
 
     @property
     def native_value(self) -> int | None:
-        """Return the days until the next holiday strictly after today.
+        """Return the days until the next special day strictly after today.
 
         Returns:
-            int | None: Positive number of days, or None when no holiday is known.
+            int | None: Positive number of days, or None when no special day is known.
         """
         data = self.coordinator.data
         if not data.next_holidays:
@@ -46,10 +47,10 @@ class SpecialDaySensor(SpecialDayEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Expose the next holiday details directly as sensor attributes.
+        """Expose the next special day details directly as sensor attributes.
 
         Returns:
-            dict[str, Any]: Next holiday details and calendar read errors.
+            dict[str, Any]: Next special day details and calendar read errors.
         """
         data = self.coordinator.data
         holiday = (

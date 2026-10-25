@@ -36,17 +36,18 @@ The integration supports one configuration and creates two entities:
 | Entity | What it shows |
 | --- | --- |
 | `binary_sensor.special_day` | `on` when one or more occasions apply today; otherwise `off` |
-| `sensor.special_day_next_holiday` | Days until the next holiday strictly after today |
+| `sensor.special_day_next_special_day` | Days until the next special day strictly after today |
 
 Home Assistant may choose different entity IDs if these names are already in
-use. The binary sensor has these attributes:
+use. Existing installations retain their registered entity IDs when a sensor
+name changes. The binary sensor has these attributes:
 
 - `events`: the full list of today's occasion names.
 - `description`: today's complete readable text.
 - `last_checked`: when the integration last checked the date and calendars.
 - `calendar_errors`: calendar entity IDs that could not be read on the latest check.
 
-The next-holiday sensor always skips today: its state is a positive number of
+The next special day sensor always skips today: its state is a positive number of
 days, or `unknown` if no future holiday is known. Its attributes include `name`,
 `date` (the actual ISO date, `YYYY-MM-DD`), `days_until`, `weekday`, and `source`
 (`rule` or `calendar`). Calendar holidays also include `calendar_entity_id` and
