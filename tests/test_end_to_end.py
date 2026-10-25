@@ -99,7 +99,7 @@ async def test_personal_rules_user_journey(
     sensor = await response.json()
     assert sensor["state"] == "on"
     assert sensor["attributes"]["events"] == ["Our anniversary"]
-    assert sensor["attributes"]["description"] == "Our anniversary"
+    assert sensor["attributes"]["name"] == "Our anniversary"
     response = await user_client.get("/api/states/sensor.special_day_next_special_day")
     next_holiday = await response.json()
     assert next_holiday["state"] == "2027-10-24"
@@ -115,7 +115,7 @@ async def test_personal_rules_user_journey(
     response = await user_client.get("/api/states/binary_sensor.special_day")
     sensor = await response.json()
     assert sensor["state"] == "on"
-    assert sensor["attributes"]["description"] == "Our anniversary"
+    assert sensor["attributes"]["name"] == "Our anniversary"
 
     # A rejected file must not replace the rules used by automatic refreshes.
     freezer.move_to("2026-10-24T12:15:01Z")
@@ -124,7 +124,7 @@ async def test_personal_rules_user_journey(
     response = await user_client.get("/api/states/binary_sensor.special_day")
     sensor = await response.json()
     assert sensor["state"] == "on"
-    assert sensor["attributes"]["description"] == "Our anniversary"
+    assert sensor["attributes"]["name"] == "Our anniversary"
     assert dt_util.parse_datetime(sensor["attributes"]["last_checked"]) >= dt_util.parse_datetime(
         "2026-10-24T12:15:00Z"
     )
@@ -136,7 +136,7 @@ async def test_personal_rules_user_journey(
     response = await user_client.get("/api/states/binary_sensor.special_day")
     sensor = await response.json()
     assert sensor["state"] == "on"
-    assert sensor["attributes"]["description"] == "Family celebration"
+    assert sensor["attributes"]["name"] == "Family celebration"
     response = await user_client.get("/api/states/sensor.special_day_next_special_day")
     next_holiday = await response.json()
     assert next_holiday["state"] == "2027-10-24"
@@ -162,7 +162,7 @@ async def test_personal_rules_user_journey(
     sensor = await response.json()
     assert sensor["state"] == "off"
     assert sensor["attributes"]["events"] == []
-    assert sensor["attributes"]["description"] == ""
+    assert sensor["attributes"]["name"] == ""
     response = await user_client.get("/api/states/sensor.special_day_next_special_day")
     next_holiday = await response.json()
     assert next_holiday["state"] == "2026-10-25"
@@ -231,7 +231,7 @@ async def test_local_calendar_user_journey(
     sensor = await response.json()
     assert sensor["state"] == "on"
     assert sensor["attributes"]["events"] == ["Family trip"]
-    assert sensor["attributes"]["description"] == "Family trip"
+    assert sensor["attributes"]["name"] == "Family trip"
     assert sensor["attributes"]["calendar_errors"] == []
     response = await user_client.get("/api/states/sensor.special_day_next_special_day")
     next_holiday = await response.json()
@@ -267,7 +267,7 @@ async def test_local_calendar_user_journey(
     sensor = await response.json()
     assert sensor["state"] == "off"
     assert sensor["attributes"]["events"] == []
-    assert sensor["attributes"]["description"] == ""
+    assert sensor["attributes"]["name"] == ""
     assert sensor["attributes"]["calendar_errors"] == []
     response = await user_client.get("/api/states/sensor.special_day_next_special_day")
     next_holiday = await response.json()
