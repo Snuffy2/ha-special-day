@@ -63,7 +63,7 @@ class SpecialDayConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "invalid_rules"
                 placeholders["error"] = str(err)
             else:
-                return self.async_create_entry(title="ha-special-day", data=user_input)
+                return self.async_create_entry(title="Special Day", data=user_input)
         return self.async_show_form(
             step_id="user",
             # Home Assistant aliases voluptuous to probatio at runtime.

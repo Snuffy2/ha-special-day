@@ -25,7 +25,7 @@ class SpecialDayEntity(CoordinatorEntity[SpecialDayCoordinator]):
         """
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry_id}_{key}"
-        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, entry_id)}, name="ha-special-day")
+        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, entry_id)}, name="Special Day")
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
