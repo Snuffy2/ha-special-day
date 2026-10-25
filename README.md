@@ -4,15 +4,15 @@
 
 | Name                                                  |    Stmts |     Miss |   Branch |   BrPart |   Cover |   Missing |
 |------------------------------------------------------ | -------: | -------: | -------: | -------: | ------: | --------: |
-| custom\_components/ha\_special\_day/\_\_init\_\_.py   |       36 |        1 |        2 |        1 |     95% |        93 |
+| custom\_components/ha\_special\_day/\_\_init\_\_.py   |       45 |        1 |        4 |        1 |     96% |       116 |
 | custom\_components/ha\_special\_day/binary\_sensor.py |       12 |        0 |        0 |        0 |    100% |           |
 | custom\_components/ha\_special\_day/config\_flow.py   |       43 |        0 |        4 |        0 |    100% |           |
 | custom\_components/ha\_special\_day/const.py          |        5 |        0 |        0 |        0 |    100% |           |
-| custom\_components/ha\_special\_day/coordinator.py    |       89 |        6 |       22 |        6 |     89% |53, 137, 192, 195, 199, 202 |
+| custom\_components/ha\_special\_day/coordinator.py    |      122 |        6 |       34 |        6 |     92% |187, 207, 274, 277, 281, 284 |
 | custom\_components/ha\_special\_day/entity.py         |       16 |        0 |        0 |        0 |    100% |           |
-| custom\_components/ha\_special\_day/rules.py          |      289 |       24 |      126 |       17 |     90% |128, 134, 152, 158, 160, 206-207, 221, 223, 225, 281, 289, 294, 296, 298, 300, 360-361, 367, 379-380, 406-408 |
-| custom\_components/ha\_special\_day/sensor.py         |       12 |        0 |        0 |        0 |    100% |           |
-| **TOTAL**                                             |  **502** |   **31** |  **154** |   **24** | **92%** |           |
+| custom\_components/ha\_special\_day/rules.py          |      321 |       22 |      154 |       17 |     92% |185, 191, 209, 215, 217, 263-264, 278, 280, 282, 338, 346, 351, 353, 355, 357, 417-418, 424, 463-465 |
+| custom\_components/ha\_special\_day/sensor.py         |       27 |        0 |        2 |        0 |    100% |           |
+| **TOTAL**                                             |  **591** |   **29** |  **198** |   **24** | **93%** |           |
 
 
 ## Setup coverage badge
