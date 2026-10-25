@@ -45,12 +45,12 @@ resolved.
 - `custom_components/ha_special_day/coordinator.py` combines date rules with
   calendar events and refreshes the current results.
 - `custom_components/ha_special_day/config_flow.py` handles setup and options;
-  `__init__.py` loads the integration, registers the reload action, and handles
+  `__init__.py` loads the integration, registers the reload and holiday lookup actions, and handles
   unloading.
 - `entity.py`, `binary_sensor.py`, and `sensor.py` provide the Home Assistant
   entities and their attributes.
 - `translations/en.json` contains the setup and options text;
-  `services.yaml` describes the reload action.
+  `services.yaml` describes the actions.
 - `tests/test_rules.py` checks date calculations and personal rule files.
   `tests/test_integration.py` exercises setup and options validation, calendar
   merging, and calendar failure recovery through Home Assistant.
