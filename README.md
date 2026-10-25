@@ -4,7 +4,7 @@
 
 | Name                                                  |    Stmts |     Miss |   Branch |   BrPart |   Cover |   Missing |
 |------------------------------------------------------ | -------: | -------: | -------: | -------: | ------: | --------: |
-| custom\_components/ha\_special\_day/\_\_init\_\_.py   |       36 |        1 |        2 |        1 |     95% |        87 |
+| custom\_components/ha\_special\_day/\_\_init\_\_.py   |       36 |        1 |        2 |        1 |     95% |        93 |
 | custom\_components/ha\_special\_day/binary\_sensor.py |       12 |        0 |        0 |        0 |    100% |           |
 | custom\_components/ha\_special\_day/config\_flow.py   |       43 |        0 |        4 |        0 |    100% |           |
 | custom\_components/ha\_special\_day/const.py          |        5 |        0 |        0 |        0 |    100% |           |

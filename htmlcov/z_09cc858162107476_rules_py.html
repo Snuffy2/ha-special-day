@@ -67,7 +67,7 @@
             <a id="nextFileLink" class="nav" href="z_09cc858162107476_sensor_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.16.2">coverage.py v7.16.2</a>,
-            created at 2026-10-25 00:26 +0000
+            created at 2026-10-25 00:48 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -193,7 +193,7 @@
     <p class="pln"><span class="n"><a id="t109" href="#t109">109</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t110" href="#t110">110</a></span><span class="t"><span class="str">    The external object accepts ``include_defaults``, ``rules``, ``exclude``,</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t111" href="#t111">111</a></span><span class="t"><span class="str">    ``bank_holidays`` and ``seasonal_fallbacks``. Rule expressions support</span>&nbsp;</span><span class="r"></span></p>
-    <p class="pln"><span class="n"><a id="t112" href="#t112">112</a></span><span class="t"><span class="str">    fixed ``D/M`` dates, Easter, named rule references, and chained offsets.</span>&nbsp;</span><span class="r"></span></p>
+    <p class="pln"><span class="n"><a id="t112" href="#t112">112</a></span><span class="t"><span class="str">    fixed ``M/D`` dates, Easter, named rule references, and chained offsets.</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t113" href="#t113">113</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t114" href="#t114">114</a></span><span class="t"><span class="str">    Args:</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t115" href="#t115">115</a></span><span class="t"><span class="str">        path (Path | None): Optional JSON configuration path.</span>&nbsp;</span><span class="r"></span></p>
@@ -317,7 +317,7 @@
     <p class="pln"><span class="n"><a id="t233" href="#t233">233</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t234" href="#t234">234</a></span><span class="t">    <span class="nam">fixed</span> <span class="op">=</span> <span class="nam">_DATE_BASE</span><span class="op">.</span><span class="nam">match</span><span class="op">(</span><span class="nam">value</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t235" href="#t235">235</a></span><span class="t">    <span class="key">if</span> <span class="nam">fixed</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t236" href="#t236">236</a></span><span class="t">        <span class="nam">day</span><span class="op">,</span> <span class="nam">month</span> <span class="op">=</span> <span class="nam">int</span><span class="op">(</span><span class="nam">fixed</span><span class="op">.</span><span class="nam">group</span><span class="op">(</span><span class="num">1</span><span class="op">)</span><span class="op">)</span><span class="op">,</span> <span class="nam">int</span><span class="op">(</span><span class="nam">fixed</span><span class="op">.</span><span class="nam">group</span><span class="op">(</span><span class="num">2</span><span class="op">)</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t236" href="#t236">236</a></span><span class="t">        <span class="nam">month</span><span class="op">,</span> <span class="nam">day</span> <span class="op">=</span> <span class="nam">int</span><span class="op">(</span><span class="nam">fixed</span><span class="op">.</span><span class="nam">group</span><span class="op">(</span><span class="num">1</span><span class="op">)</span><span class="op">)</span><span class="op">,</span> <span class="nam">int</span><span class="op">(</span><span class="nam">fixed</span><span class="op">.</span><span class="nam">group</span><span class="op">(</span><span class="num">2</span><span class="op">)</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t237" href="#t237">237</a></span><span class="t">        <span class="key">try</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t238" href="#t238">238</a></span><span class="t">            <span class="nam">date</span><span class="op">(</span><span class="num">2000</span><span class="op">,</span> <span class="nam">month</span><span class="op">,</span> <span class="nam">day</span><span class="op">)</span>  <span class="com"># Leap-day expressions are valid in leap anchor years.</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t239" href="#t239">239</a></span><span class="t">        <span class="key">except</span> <span class="nam">ValueError</span> <span class="key">as</span> <span class="nam">error</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
@@ -568,7 +568,7 @@
             <a class="nav" href="z_09cc858162107476_sensor_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.16.2">coverage.py v7.16.2</a>,
-            created at 2026-10-25 00:26 +0000
+            created at 2026-10-25 00:48 +0000
         </p>
     </div>
 </footer>
