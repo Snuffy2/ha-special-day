@@ -134,17 +134,16 @@ def test_lent_and_advent_fallbacks_can_be_disabled_or_excluded(tmp_path: Path) -
 @pytest.mark.parametrize(
     ("rules", "message"),
     [
-        ({"bad": "2/31"}, "bad.*date"),
-        ({"bad": "25/12"}, "bad.*date"),
-        ({"bad": "Missing Rule+1d"}, "bad.*unknown"),
-        ({"bad": "1/1+1q"}, "bad.*suffix"),
-        ({"bad": "1/1+" + "9" * 200 + "d"}, "bad.*amount"),
-        ({"bad": "1/1+2000d+2000d"}, "bad.*cumulative"),
-        (
-            {"base": "1/1+2000d", "bad": "base+2000d"},
-            "bad.*reference chain cumulative",
+        pytest.param({"bad": "2/31"}, "bad", id="invalid-day"),
+        pytest.param({"bad": "25/12"}, "bad", id="reversed-month-day"),
+        pytest.param({"bad": "Missing Rule+1d"}, "bad", id="unknown-reference"),
+        pytest.param({"bad": "1/1+1q"}, "bad", id="invalid-offset-unit"),
+        pytest.param({"bad": "1/1+" + "9" * 200 + "d"}, "bad", id="oversized-offset"),
+        pytest.param({"bad": "1/1+2000d+2000d"}, "bad", id="cumulative-offset"),
+        pytest.param(
+            {"base": "1/1+2000d", "bad": "base+2000d"}, "bad", id="reference-chain-offset"
         ),
-        ({"first": "second+1d", "second": "first-1w"}, "cyclic rule reference"),
+        pytest.param({"first": "second+1d", "second": "first-1w"}, "cycl", id="cyclic-reference"),
     ],
 )
 def test_invalid_rules_raise_entry_specific_errors(

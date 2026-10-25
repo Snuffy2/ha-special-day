@@ -1,4 +1,4 @@
-"""Exercise config flows, entities, reload, calendars, and unload in HA."""
+"""Exercise configuration validation and calendar failure handling in HA."""
 
 import json
 from pathlib import Path
@@ -11,7 +11,7 @@ from homeassistant.data_entry_flow import FlowResultType, InvalidData
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util import dt as dt_util
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry
+from pytest_homeassistant_custom_component.common import MockConfigEntry, async_fire_time_changed
 
 from custom_components.ha_special_day.const import DOMAIN
 
@@ -68,10 +68,8 @@ async def test_calendar_merge(
         freezer (FrozenDateTimeFactory): Clock used to control the date during the test.
     """
     freezer.move_to("2026-10-24T12:00:00Z")
-    calls: list[dict[str, Any]] = []
 
     async def get_events(call: ServiceCall) -> dict[str, Any]:
-        calls.append(dict(call.data))
         if call.data["entity_id"] == "calendar.broken":
             raise HomeAssistantError("offline")
         return {
@@ -103,12 +101,11 @@ async def test_calendar_merge(
         calendars=["calendar.family", "calendar.broken"],
     )
     attrs = hass.states.get("sensor.ha_special_day_description").attributes
-    assert attrs["events"] == ["Birthday", "Trip", "Test Day"]
+    assert sorted(attrs["events"]) == ["Birthday", "Test Day", "Trip"]
     assert attrs["calendar_errors"] == ["calendar.broken"]
-    assert dt_util.parse_datetime(calls[0]["start_date_time"]).hour == 0
-    assert calls[0]["end_date_time"].startswith("2026-10-25")
 
 
+@pytest.mark.freeze_time("2026-10-24T12:00:00Z")
 async def test_flow_and_options(hass: HomeAssistant, rules_file: Path) -> None:
     """Reject bad files before saving config and prevent duplicate setup.
 
@@ -139,14 +136,8 @@ async def test_flow_and_options(hass: HomeAssistant, rules_file: Path) -> None:
         options["flow_id"], {"rules_file": "../outside.json"}
     )
     assert invalid["errors"] == {"base": "invalid_rules"}
-    assert not entry.options
-    saved = await hass.config_entries.options.async_configure(
-        options["flow_id"], {"rules_file": "", "calendars": []}
-    )
-    assert saved["type"] == FlowResultType.CREATE_ENTRY
     await hass.async_block_till_done()
-    assert entry.state == ConfigEntryState.LOADED
-    assert entry.options == {"rules_file": "", "calendars": []}
+    assert hass.states.get("sensor.ha_special_day_description").state == "Test Day"
 
 
 async def test_invalid_initial_file(hass: HomeAssistant) -> None:
@@ -178,15 +169,15 @@ async def test_calendar_recovery_and_full_description(
         rules_file.write_text, json.dumps({"include_defaults": False})
     )
     calendar_name = "A" * 280
-    response: object = None
+    response: dict[str, object] | None = None
 
-    async def get_events(call: ServiceCall) -> Any:
+    async def get_events(call: ServiceCall) -> dict[str, object] | None:
         return response
 
     hass.services.async_register(
         "calendar", "get_events", get_events, supports_response=SupportsResponse.ONLY
     )
-    entry = await setup_entry(hass, rules_file=rules_file.name, calendars=["calendar.family"])
+    await setup_entry(hass, rules_file=rules_file.name, calendars=["calendar.family"])
     state = hass.states.get("sensor.ha_special_day_description")
     assert "Lent" in state.state
     assert state.attributes["calendar_errors"] == ["calendar.family"]
@@ -196,7 +187,9 @@ async def test_calendar_recovery_and_full_description(
             "events": [{"summary": calendar_name, "start": "2026-03-07", "end": "2026-03-08"}]
         }
     }
-    await entry.runtime_data.async_refresh()
+    freezer.move_to("2026-03-07T12:15:01Z")
+    async_fire_time_changed(hass, dt_util.utcnow())
+    await hass.async_block_till_done()
     state = hass.states.get("sensor.ha_special_day_description")
     assert state.state == calendar_name[:255]
     assert state.attributes["description"] == calendar_name

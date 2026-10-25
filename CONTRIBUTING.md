@@ -52,8 +52,8 @@ resolved.
 - `translations/en.json` contains the setup and options text;
   `services.yaml` describes the reload action.
 - `tests/test_rules.py` checks date calculations and personal rule files.
-  `tests/test_integration.py` exercises setup, entities, reloads, calendars,
-  and unloading through Home Assistant.
+  `tests/test_integration.py` exercises setup and options validation, calendar
+  merging, and calendar failure recovery through Home Assistant.
 - `tests/test_end_to_end.py` follows user journeys through authenticated Home
   Assistant HTTP APIs: setup, rule reload failure and recovery, Configure,
   removal, and real Local Calendar events discovered by scheduled refreshes.
