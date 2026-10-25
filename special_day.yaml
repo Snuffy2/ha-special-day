@@ -275,8 +275,6 @@ sequence:
           as_local(as_datetime('%04d-12-24T00:00:00'%(cur_year))) -%}
         {%- set christmas_day =
           as_local(as_datetime('%04d-12-25T00:00:00'%(cur_year))) -%}
-        {%- set boxing_day =
-          as_local(as_datetime('%04d-12-26T00:00:00'%(cur_year))) -%}
         {%- set new_years_day =
           as_local(as_datetime('%04d-01-01T00:00:00'%(cur_year))) -%}
 
