@@ -1,4 +1,7 @@
 Generated with the built-in image_gen tool.
+Packaged PNG exports: custom_components/ha_special_day/brand/icon.png (256x256)
+and custom_components/ha_special_day/brand/icon@2x.png (512x512).
+Exports trim transparent margins and retain a square canvas and alpha channel.
 
 Use case: logo-brand
 Asset type: square logo mark for ha-special-day, a Home Assistant integration that identifies today's holidays, personal occasions, and all-day calendar events.
