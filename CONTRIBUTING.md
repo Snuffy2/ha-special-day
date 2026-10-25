@@ -1,49 +1,67 @@
 # Contributing to ha-special-day
 
-Bug reports, holiday corrections, documentation improvements, and code changes
-are welcome. For a bug report, include the integration and Home Assistant versions,
-steps to reproduce, the expected result, and relevant logs. Remove personal
-calendar details and other private information from examples and logs.
+You are welcome to report a problem, correct a holiday date, improve the
+instructions, or contribute code. You do not need to be a developer to help.
 
-## Development setup
+## Ways to help
 
-Start from the latest `main` branch and create a branch for your changes. Install
-Python and uv versions that satisfy `requires-python` and `tool.uv.required-version`
-in [pyproject.toml](pyproject.toml), then run these commands from the repository root:
+For a bug or date correction, open an issue in the project's GitHub repository.
+Describe what you expected, what happened, and how to reproduce it. Include
+your Home Assistant and integration versions when relevant. Remove personal
+calendar details, addresses, and other private information from examples and
+logs.
+
+If you spot unclear or incorrect documentation, you can describe the change in
+an issue or submit a documentation-only pull request. You do not need to set up
+Python or install development tools for either of these contributions.
+
+## Set up for code changes
+
+For a code change, fork the project on GitHub and clone your fork to your
+computer. Create a branch from the latest `main`, then open a terminal in the
+project folder (the folder containing `pyproject.toml`). Install Python and uv
+versions allowed by
+[`pyproject.toml`](pyproject.toml), then install the development dependencies:
 
 ```sh
 uv sync --locked --group dev
 ```
 
-This creates `.venv` with the dependencies pinned in `uv.lock`. The `ha`, `lint`,
-`pytest`, and `dev` dependency groups share the same lockfile; `dev` includes the
-linting and testing tools. Run tools through this environment so local checks
-use the same dependencies as CI.
+This creates `.venv` with the dependency versions in `uv.lock`. The `dev` group
+includes the Home Assistant test dependencies, pytest, and the linting and
+type-checking tools. Run the tools from this environment so your local checks
+use the project dependencies.
 
-When changing dependencies, update `pyproject.toml`, run `uv lock`, and commit both
-files. Keep any dependency constraints and overrides in place unless the reason
-for them has been resolved.
+When you change dependencies, update `pyproject.toml`, run `uv lock`, and
+include both `pyproject.toml` and `uv.lock` in your pull request. Keep existing
+dependency constraints and overrides unless the reason for them has been
+resolved.
 
-## Finding the relevant code
+## Find the relevant code
 
-- `custom_components/ha_special_day/rules.py` evaluates date expressions and loads
-  personal rules; `defaults.json` contains the bundled occasions.
-- `coordinator.py` combines local rules with calendar events and refreshes state.
-- `config_flow.py` handles setup and options; `__init__.py` manages integration
-  setup, the reload action, and unload.
-- `entity.py`, `binary_sensor.py`, and `sensor.py` expose the results as entities.
-- `translations/en.json` supplies the setup and options text; `services.yaml`
-  describes the reload action.
-- `tests/test_rules.py` covers the date evaluator, and `tests/test_integration.py`
-  exercises the real Home Assistant integration and entity platforms.
+- `custom_components/ha_special_day/defaults.json` contains the built-in dates.
+- `custom_components/ha_special_day/rules.py` checks personal JSON files and
+  calculates fixed dates, Easter dates, and date expressions.
+- `custom_components/ha_special_day/coordinator.py` combines date rules with
+  calendar events and refreshes the current results.
+- `custom_components/ha_special_day/config_flow.py` handles setup and options;
+  `__init__.py` loads the integration, registers the reload action, and handles
+  unloading.
+- `entity.py`, `binary_sensor.py`, and `sensor.py` provide the Home Assistant
+  entities and their attributes.
+- `translations/en.json` contains the setup and options text;
+  `services.yaml` describes the reload action.
+- `tests/test_rules.py` checks date calculations and personal rule files.
+  `tests/test_integration.py` exercises setup, entities, reloads, calendars,
+  and unloading through Home Assistant.
 
-The files listed above are inside `custom_components/ha_special_day` unless a
-different directory is shown. Keep new constants in `const.py` and follow the
-existing module layout and typed Python conventions.
+These paths are inside `custom_components/ha_special_day` unless a different
+directory is shown. Keep constants in `const.py`, add type annotations to new
+Python functions, and follow the existing module layout.
 
-## Testing and checks
+## Run tests and checks
 
-Run the following before submitting a pull request:
+Run these commands before submitting a code change:
 
 ```sh
 ./.venv/bin/pytest -q
@@ -53,34 +71,39 @@ Run the following before submitting a pull request:
 ./.venv/bin/prek run --all-files
 ```
 
-Ruff and some prek hooks apply fixes. Review those changes and rerun any affected
-checks. Hook definitions live in [prek.toml](prek.toml); Python tool settings live
-in [pyproject.toml](pyproject.toml). Pytest prints coverage and writes an HTML
-report under the configured `--cov-report=html` output directory.
+Pytest runs the test suite and prints coverage; its HTML coverage report is
+written to the directory selected by `--cov-report=html`. Ruff checks and formats Python code, and mypy checks
+types. Prek runs the repository's configured checks. Its Ruff hooks can update
+files, so review any changes they make and rerun affected checks.
 
-For a focused test run, use `./.venv/bin/pytest tests/test_rules.py` or select a
-test with `-k`. Add regression coverage for changed behavior at the rule-loading
-or Home Assistant interface. Relevant cases include invalid input, leap days,
-offsets crossing a year boundary, failed rule reloads, calendar failures, local
-midnight refreshes, and unloading the integration. Fixed dates use `M/D`; when
-changing bundled expressions, verify that their intended holiday dates remain
-correct. Keep the [README](README.md) examples consistent with behavior.
+For a focused test run, use `./.venv/bin/pytest tests/test_rules.py` or add
+`-k` followed by a test name. Add regression coverage for changed behavior at
+the rule-loading or Home Assistant interface. Useful cases include invalid
+input, leap days, offsets across a year boundary, failed rule reloads, calendar
+failures, local midnight refreshes, and unloading the integration. Fixed dates
+use month/day order (`M/D`); when changing a built-in expression, check the
+occasion's date in the affected years. Keep the [README](README.md) examples
+consistent with the integration.
 
-Use a separate development Home Assistant instance for manual testing. Check
-setup and options, entity states and attributes, the `ha_special_day.reload_rules`
-action, and logs. Keep personal rule files outside the integration directory.
+For manual testing, use a separate development Home Assistant instance. Check
+setup and options, entity states and attributes, the
+`ha_special_day.reload_rules` action, and the logs. Keep personal rules files
+outside the integration directory.
 
-## Pull requests
+## Pull requests and releases
 
-Keep changes focused and explain the problem, resulting behavior, and validation
-performed. Include a small reproducing example for date or calendar bugs, and
-update documentation and translations when the user-facing behavior changes.
+Keep each pull request focused. Explain the problem, the resulting behavior,
+and the checks you ran. For a date or calendar issue, include a small example
+that shows how to reproduce it. Update documentation and translations when
+user-facing behavior changes.
 
-Use a Conventional Commit style PR title, such as `fix: handle a calendar timeout`
-or `docs: clarify date offsets`. GitHub workflows validate PR titles, run tests
-and coverage, check the lockfile, run lint and formatting checks, and validate
-the integration with Hassfest and HACS. Resolve relevant failures before merging.
+Use a Conventional Commit style pull request title, such as `fix: handle a
+calendar timeout` or `docs: clarify date offsets`. Automated checks validate
+the title, run tests, check the dependency lockfile, and validate the
+integration with Hassfest and HACS. Resolve relevant check failures before
+merging.
 
 Release Please manages version updates and releases from commits merged to
-`main`. Leave version changes to its release PR. After that PR is merged, the
-release workflow creates the tag and GitHub Release and uploads the HACS archive.
+`main`; leave version changes to its release pull request. After that pull
+request is merged, the release workflow creates the tag and GitHub Release and
+uploads the HACS archive.
