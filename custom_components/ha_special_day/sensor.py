@@ -46,16 +46,19 @@ class SpecialDaySensor(SpecialDayEntity, SensorEntity):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Expose details for every holiday tied for the next date.
+        """Expose the next holiday details directly as sensor attributes.
 
         Returns:
             dict[str, Any]: Next holiday details and calendar read errors.
         """
         data = self.coordinator.data
-        holidays = [holiday.as_dict(data.checked.date()) for holiday in data.next_holidays]
+        holiday = (
+            data.next_holidays[0].as_dict(data.checked.date())
+            if data.next_holidays
+            else {"name": None, "date": None}
+        )
         return {
-            **(holidays[0] if holidays else {"name": None, "date": None}),
-            "holidays": holidays,
+            **holiday,
             "last_checked": data.checked.isoformat(),
             "calendar_errors": data.calendar_errors,
         }

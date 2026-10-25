@@ -50,9 +50,9 @@ The next-holiday sensor always skips today: its state is a positive number of
 days, or `unknown` if no future holiday is known. Its attributes include `name`,
 `date` (the actual ISO date, `YYYY-MM-DD`), `days_until`, `weekday`, and `source`
 (`rule` or `calendar`). Calendar holidays also include `calendar_entity_id` and
-`end_date` (exclusive). The `holidays` list contains details for every holiday
-on the next date; the first, ordered by name, supplies the top-level details.
-It also has `last_checked` and `calendar_errors` attributes.
+`end_date` (exclusive). All details are individual sensor attributes. If several
+holidays share the next date, the first ordered by name supplies the details.
+The sensor also has `last_checked` and `calendar_errors` attributes.
 
 Both the countdown and holiday lookup use named rules and selected all-day
 calendar events. Annual rules are searched up to eight years ahead, including
