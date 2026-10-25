@@ -123,7 +123,7 @@ async def test_calendar_merge(
     assert next_holiday.attributes["source"] == "rule"
     # A multi-day calendar event that started before today stays on the binary
     # sensor, but it is not a future holiday for the countdown sensor.
-    assert [holiday["name"] for holiday in next_holiday.attributes["holidays"]] == ["Test Day"]
+    assert "holidays" not in next_holiday.attributes
 
 
 @pytest.mark.freeze_time("2026-10-24T12:00:00Z")
@@ -220,12 +220,12 @@ async def test_calendar_recovery_and_full_description(
     assert state.attributes["calendar_errors"] == []
 
 
-async def test_next_holiday_ties_and_unknown_state(
+async def test_next_holiday_selects_first_tied_holiday(
     hass: HomeAssistant,
     rules_file: Path,
     freezer: FrozenDateTimeFactory,
 ) -> None:
-    """Expose every holiday tied on the earliest future date.
+    """Expose individual details for the first holiday on the earliest future date.
 
     Args:
         hass (HomeAssistant): Home Assistant instance.
@@ -266,10 +266,9 @@ async def test_next_holiday_ties_and_unknown_state(
     assert next_holiday.attributes["weekday"] == "Sunday"
     assert next_holiday.attributes["source"] == "calendar"
     assert next_holiday.attributes["calendar_entity_id"] == "calendar.family"
-    assert [holiday["name"] for holiday in next_holiday.attributes["holidays"]] == [
-        "Calendar party",
-        "Rule party",
-    ]
+    assert next_holiday.attributes["name"] == "Calendar party"
+    assert next_holiday.attributes["end_date"] == "2026-10-26"
+    assert "holidays" not in next_holiday.attributes
 
 
 async def test_next_holiday_unknown_when_rules_are_empty(
@@ -299,7 +298,7 @@ async def test_next_holiday_unknown_when_rules_are_empty(
     assert empty_sensor.state == "unknown"
     assert empty_sensor.attributes["name"] is None
     assert empty_sensor.attributes["date"] is None
-    assert empty_sensor.attributes["holidays"] == []
+    assert "holidays" not in empty_sensor.attributes
     assert empty_sensor.attributes["calendar_errors"] == []
 
 
