@@ -1,4 +1,6 @@
 {
+  "domain": "ha_special_day",
+  "name": "ha-special-day",
   "after_dependencies": [
     "calendar"
   ],
@@ -7,11 +9,9 @@
   ],
   "config_flow": true,
   "documentation": "https://github.com/Snuffy2/ha-special-day",
-  "domain": "ha_special_day",
   "integration_type": "helper",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/Snuffy2/ha-special-day/issues",
-  "name": "ha-special-day",
   "requirements": [],
   "version": "0.1.0"
 }
