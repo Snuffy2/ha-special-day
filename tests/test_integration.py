@@ -379,7 +379,7 @@ async def test_get_holiday_service_matches_and_validates_names(
         await hass.services.async_call(
             DOMAIN, "get_holiday", {"name": "Missing"}, blocking=True, return_response=True
         )
-    with pytest.raises(ServiceValidationError):
+    with pytest.raises(ServiceValidationError, match="Holiday name must not be blank"):
         await hass.services.async_call(
             DOMAIN, "get_holiday", {"name": "   "}, blocking=True, return_response=True
         )
@@ -419,10 +419,15 @@ async def test_get_holiday_service_matches_calendar_names_with_outer_whitespace(
             "calendar.family": {
                 "events": [
                     {
+                        "summary": "   ",
+                        "start": "2026-10-25",
+                        "end": "2026-10-26",
+                    },
+                    {
                         "summary": "  Calendar party  ",
                         "start": "2026-10-25",
                         "end": "2026-10-26",
-                    }
+                    },
                 ]
             }
         }
@@ -449,6 +454,16 @@ async def test_get_holiday_service_matches_calendar_names_with_outer_whitespace(
         "end_date": "2026-10-26",
         "calendar_entity_id": "calendar.family",
     }
+
+    next_holiday = hass.states.get("sensor.special_day_next_special_day")
+    assert next_holiday.state == "2026-10-25"
+    assert next_holiday.attributes["name"] == "  Calendar party  "
+    assert next_holiday.attributes["events"] == ["  Calendar party  "]
+
+    with pytest.raises(ServiceValidationError, match="Holiday name must not be blank"):
+        await hass.services.async_call(
+            DOMAIN, "get_holiday", {"name": "   "}, blocking=True, return_response=True
+        )
 
 
 async def test_next_holiday_leap_day_rollover(

@@ -180,12 +180,14 @@ class SpecialDayCoordinator(DataUpdateCoordinator[SpecialDayData]):
             dict[str, Any]: JSON-compatible details of the earliest matching occurrence.
 
         Raises:
-            ServiceValidationError: Refresh failed or no upcoming matching holiday is known.
+            ServiceValidationError: Refresh failed, the name is blank, or no upcoming match exists.
         """
         await self.async_refresh()
         if not self.last_update_success:
             raise ServiceValidationError("Cannot refresh holiday dates")
         normalized = name.strip().casefold()
+        if not normalized:
+            raise ServiceValidationError("Holiday name must not be blank")
         for holiday in self.data.holidays:
             if holiday.name.strip().casefold() == normalized:
                 return holiday.as_dict(self.data.checked.date())
@@ -283,6 +285,6 @@ def calendar_holidays(response: object, entity_id: str) -> list[Holiday]:
         event_start = dt_util.parse_date(start)
         event_end = dt_util.parse_date(end)
         # Timed events have datetime strings rather than date-only values.
-        if event_start and event_end and event_start < event_end and summary:
+        if event_start and event_end and event_start < event_end and summary.strip():
             events.append(Holiday(summary, event_start, "calendar", event_end, entity_id))
     return events
