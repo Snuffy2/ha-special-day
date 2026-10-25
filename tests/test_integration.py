@@ -120,7 +120,7 @@ async def test_calendar_merge(
     assert next_holiday.state == "365"
     assert next_holiday.attributes["friendly_name"] == "Special Day Next special day"
     assert next_holiday.attributes["name"] == "Test Day"
-    assert next_holiday.attributes["date"] == "October 24, 2027"
+    assert next_holiday.attributes["date"] == "2027-10-24"
     assert next_holiday.attributes["source"] == "rule"
     # A multi-day calendar event that started before today stays on the binary
     # sensor, but it is not a future holiday for the countdown sensor.
@@ -266,16 +266,16 @@ async def test_next_holiday_selects_first_tied_holiday(
 
     next_holiday = hass.states.get("sensor.special_day_next_special_day")
     assert next_holiday.state == "1"
-    assert next_holiday.attributes["date"] == "October 25, 2026"
+    assert next_holiday.attributes["date"] == "2026-10-25"
     assert next_holiday.attributes["days_until"] == 1
     assert next_holiday.attributes["weekday"] == "Sunday"
     assert next_holiday.attributes["source"] == "calendar"
     assert next_holiday.attributes["calendar_entity_id"] == "calendar.family"
     assert next_holiday.attributes["name"] == "Calendar party"
-    assert next_holiday.attributes["end_date"] == "October 26, 2026"
+    assert next_holiday.attributes["end_date"] == "2026-10-26"
     assert "holidays" not in next_holiday.attributes
 
-    # Sensor dates are calendar text for the frontend; action dates stay ISO.
+    # Sensor and action dates use the same ISO calendar-date strings.
     result = await hass.services.async_call(
         DOMAIN,
         "get_holiday",
@@ -468,7 +468,7 @@ async def test_next_holiday_leap_day_rollover(
     await setup_entry(hass, rules_file=rules_file.name)
     state = hass.states.get("sensor.special_day_next_special_day")
     assert state.state == "1"
-    assert state.attributes["date"] == "February 29, 2028"
+    assert state.attributes["date"] == "2028-02-29"
 
     freezer.move_to("2028-02-29T12:00:00Z")
     response = await hass.services.async_call(
@@ -482,7 +482,7 @@ async def test_next_holiday_leap_day_rollover(
     assert response["days_until"] == 0
     state = hass.states.get("sensor.special_day_next_special_day")
     assert state.state == "1461"
-    assert state.attributes["date"] == "February 29, 2032"
+    assert state.attributes["date"] == "2032-02-29"
 
 
 async def test_setup_removes_customized_legacy_description_entity(hass: HomeAssistant) -> None:

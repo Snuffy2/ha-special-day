@@ -104,7 +104,7 @@ async def test_personal_rules_user_journey(
     next_holiday = await response.json()
     assert next_holiday["state"] == "365"
     assert next_holiday["attributes"]["name"] == "Our anniversary"
-    assert next_holiday["attributes"]["date"] == "October 24, 2027"
+    assert next_holiday["attributes"]["date"] == "2027-10-24"
 
     await hass.async_add_executor_job(path.write_text, '{"rules": {"Bad Date": "99/99"}}')
     response = await user_client.post("/api/services/ha_special_day/reload_rules", json={})
@@ -163,7 +163,7 @@ async def test_personal_rules_user_journey(
     next_holiday = await response.json()
     assert next_holiday["state"] == "1"
     assert next_holiday["attributes"]["name"] == "Tomorrow"
-    assert next_holiday["attributes"]["date"] == "October 25, 2026"
+    assert next_holiday["attributes"]["date"] == "2026-10-25"
 
     response = await user_client.delete(f"/api/config/config_entries/entry/{entry_id}")
     assert response.status == 200
@@ -232,7 +232,7 @@ async def test_local_calendar_user_journey(
     next_holiday = await response.json()
     assert next_holiday["state"] == "3"
     assert next_holiday["attributes"]["name"] == "Future trip"
-    assert next_holiday["attributes"]["date"] == "October 27, 2026"
+    assert next_holiday["attributes"]["date"] == "2026-10-27"
     assert next_holiday["attributes"]["source"] == "calendar"
     assert next_holiday["attributes"]["calendar_entity_id"] == "calendar.family"
 
@@ -266,4 +266,4 @@ async def test_local_calendar_user_journey(
     response = await user_client.get("/api/states/sensor.special_day_next_special_day")
     next_holiday = await response.json()
     assert next_holiday["state"] == "2"
-    assert next_holiday["attributes"]["date"] == "October 27, 2026"
+    assert next_holiday["attributes"]["date"] == "2026-10-27"

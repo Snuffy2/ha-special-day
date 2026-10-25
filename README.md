@@ -49,13 +49,10 @@ name changes. The binary sensor has these attributes:
 
 The next special day sensor always skips today: its state is a positive number of
 days, or `unknown` if no future holiday is known. Its attributes include `name`,
-`date` (calendar text such as `October 25, 2026`), `days_until`, `weekday`, and `source`
+`date` (the actual ISO date, `YYYY-MM-DD`), `days_until`, `weekday`, and `source`
 (`rule` or `calendar`). Calendar holidays also include `calendar_entity_id` and
-`end_date` (exclusive, in the same calendar-text format). Calendar text avoids
-Home Assistant shifting an all-day date to the previous day when formatting
-ISO dates in timezones west of UTC. All details are individual sensor attributes.
-If several holidays share the next date, the first ordered by name supplies the
-details.
+`end_date` (exclusive). All details are individual sensor attributes. If several
+holidays share the next date, the first ordered by name supplies the details.
 The sensor also has `last_checked` and `calendar_errors` attributes.
 
 Both the countdown and holiday lookup use named rules and selected all-day
