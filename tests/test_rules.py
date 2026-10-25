@@ -50,7 +50,7 @@ def test_inclusive_and_legacy_week_weekday_offsets(tmp_path: Path) -> None:
             "bank_holidays": False,
             "rules": {
                 "inclusive": "1/1+1@Mon",
-                "legacy_week": "1/2+1w@mon",
+                "legacy_week": "2/1+1w@mon",
             },
         },
     )
@@ -73,10 +73,10 @@ def test_leap_day_month_clamping_and_cross_year_offsets(tmp_path: Path) -> None:
             "seasonal_fallbacks": False,
             "bank_holidays": False,
             "rules": {
-                "leap": "29/2",
-                "clamped": "31/1+1m",
+                "leap": "2/29",
+                "clamped": "1/31+1m",
                 "new_year_reference": "year_end+1d",
-                "year_end": "31/12",
+                "year_end": "12/31",
             },
         },
     )
@@ -134,7 +134,8 @@ def test_lent_and_advent_fallbacks_can_be_disabled_or_excluded(tmp_path: Path) -
 @pytest.mark.parametrize(
     ("rules", "message"),
     [
-        ({"bad": "31/2"}, "bad.*date"),
+        ({"bad": "2/31"}, "bad.*date"),
+        ({"bad": "25/12"}, "bad.*date"),
         ({"bad": "Missing Rule+1d"}, "bad.*unknown"),
         ({"bad": "1/1+1q"}, "bad.*suffix"),
         ({"bad": "1/1+" + "9" * 200 + "d"}, "bad.*amount"),
@@ -173,3 +174,28 @@ def test_configuration_types_and_unknown_keys_are_rejected(tmp_path: Path) -> No
         _load(tmp_path, {"bank_holidays": "yes"})
     with pytest.raises(RuleError, match="unknown key"):
         _load(tmp_path, {"surprise": True})
+
+
+@pytest.mark.parametrize(
+    ("expression", "expected"),
+    [("7/4", date(2024, 7, 4)), ("12/25", date(2024, 12, 25))],
+)
+def test_custom_dates_use_month_day(tmp_path: Path, expression: str, expected: date) -> None:
+    """Interpret custom dates in month/day order.
+
+    Args:
+        tmp_path (Path): Temporary directory for the JSON configuration.
+        expression (str): Custom month/day expression.
+        expected (date): Date on which the custom occasion should occur.
+    """
+    rules = _load(
+        tmp_path,
+        {
+            "include_defaults": False,
+            "bank_holidays": False,
+            "seasonal_fallbacks": False,
+            "rules": {"Custom Day": expression},
+        },
+    )
+    assert rules.events_on(expected) == ["Custom Day"]
+    assert rules.events_on(date(2024, 4, 7)) == []

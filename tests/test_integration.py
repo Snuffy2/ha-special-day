@@ -7,7 +7,7 @@ from typing import Any
 from freezegun.api import FrozenDateTimeFactory
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import HomeAssistant, ServiceCall, SupportsResponse
-from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.data_entry_flow import FlowResultType, InvalidData
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util import dt as dt_util
 import pytest
@@ -33,7 +33,7 @@ def rules_file(hass: HomeAssistant) -> Path:
                 "include_defaults": False,
                 "bank_holidays": False,
                 "seasonal_fallbacks": False,
-                "rules": {"Test Day": "24/10"},
+                "rules": {"Test Day": "10/24"},
             }
         )
     )
@@ -184,6 +184,8 @@ async def test_flow_and_options(hass: HomeAssistant, rules_file: Path) -> None:
     """
     flow = await hass.config_entries.flow.async_init(DOMAIN, context={"source": "user"})
     assert flow["type"] == FlowResultType.FORM
+    with pytest.raises(InvalidData):
+        await hass.config_entries.flow.async_configure(flow["flow_id"], {"rules_file": 42})
     failed = await hass.config_entries.flow.async_configure(
         flow["flow_id"], {"rules_file": "missing.json"}
     )

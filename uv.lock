@@ -1205,6 +1205,106 @@ wheels = [
 ]
 
 [[package]]
+name = "ha-special-day"
+source = { virtual = "." }
+
+[package.dev-dependencies]
+dev = [
+    { name = "homeassistant" },
+    { name = "mypy" },
+    { name = "prek" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "pytest-homeassistant-custom-component" },
+    { name = "pytest-timeout" },
+    { name = "ruff" },
+    { name = "types-cffi" },
+    { name = "types-greenlet" },
+    { name = "types-pymysql" },
+    { name = "types-pyrfc3339" },
+    { name = "types-python-dateutil" },
+    { name = "types-pyyaml" },
+    { name = "types-requests" },
+    { name = "types-setuptools" },
+    { name = "uv" },
+]
+ha = [
+    { name = "homeassistant" },
+]
+lint = [
+    { name = "homeassistant" },
+    { name = "mypy" },
+    { name = "prek" },
+    { name = "ruff" },
+    { name = "types-cffi" },
+    { name = "types-greenlet" },
+    { name = "types-pymysql" },
+    { name = "types-pyrfc3339" },
+    { name = "types-python-dateutil" },
+    { name = "types-pyyaml" },
+    { name = "types-requests" },
+    { name = "types-setuptools" },
+    { name = "uv" },
+]
+pytest = [
+    { name = "homeassistant" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "pytest-homeassistant-custom-component" },
+    { name = "pytest-timeout" },
+]
+
+[package.metadata]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "homeassistant", specifier = ">=2026.3.0" },
+    { name = "mypy" },
+    { name = "prek" },
+    { name = "pytest", specifier = ">=9" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "pytest-homeassistant-custom-component", specifier = ">=0.13.317" },
+    { name = "pytest-timeout" },
+    { name = "ruff" },
+    { name = "types-cffi" },
+    { name = "types-greenlet" },
+    { name = "types-pymysql" },
+    { name = "types-pyrfc3339" },
+    { name = "types-python-dateutil" },
+    { name = "types-pyyaml" },
+    { name = "types-requests" },
+    { name = "types-setuptools" },
+    { name = "uv", specifier = ">=0.13.4" },
+]
+ha = [{ name = "homeassistant", specifier = ">=2026.3.0" }]
+lint = [
+    { name = "homeassistant", specifier = ">=2026.3.0" },
+    { name = "mypy" },
+    { name = "prek" },
+    { name = "ruff" },
+    { name = "types-cffi" },
+    { name = "types-greenlet" },
+    { name = "types-pymysql" },
+    { name = "types-pyrfc3339" },
+    { name = "types-python-dateutil" },
+    { name = "types-pyyaml" },
+    { name = "types-requests" },
+    { name = "types-setuptools" },
+    { name = "uv", specifier = ">=0.13.4" },
+]
+pytest = [
+    { name = "homeassistant", specifier = ">=2026.3.0" },
+    { name = "pytest", specifier = ">=9" },
+    { name = "pytest-asyncio" },
+    { name = "pytest-cov" },
+    { name = "pytest-homeassistant-custom-component", specifier = ">=0.13.317" },
+    { name = "pytest-timeout" },
+]
+
+[[package]]
 name = "habluetooth"
 version = "7.1.2"
 source = { registry = "https://pypi.org/simple" }
@@ -3027,106 +3127,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/45/8c/1ad04f715ee3cb75d4d1236f4f1b8ac63ee245959847220aa484445d7301/snitun-0.47.0.tar.gz", hash = "sha256:264975472011b7a211e44880c614d5534f6fe953c125e0cec365bae3a169c578", size = 64346, upload-time = "2026-06-29T08:12:49.395Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/bf/69/c7ba5437d10ae7a6446169a1528c50ec38936455fed23480dde36902a6fe/snitun-0.47.0-py3-none-any.whl", hash = "sha256:57eb4710f13a03360c07527c8e2d442b8c90e8ff7b94c71228cde5da8dbb755a", size = 72315, upload-time = "2026-06-29T08:12:48.231Z" },
-]
-
-[[package]]
-name = "ha-special-day"
-source = { virtual = "." }
-
-[package.dev-dependencies]
-dev = [
-    { name = "homeassistant" },
-    { name = "mypy" },
-    { name = "prek" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "pytest-homeassistant-custom-component" },
-    { name = "pytest-timeout" },
-    { name = "ruff" },
-    { name = "types-cffi" },
-    { name = "types-greenlet" },
-    { name = "types-pymysql" },
-    { name = "types-pyrfc3339" },
-    { name = "types-python-dateutil" },
-    { name = "types-pyyaml" },
-    { name = "types-requests" },
-    { name = "types-setuptools" },
-    { name = "uv" },
-]
-ha = [
-    { name = "homeassistant" },
-]
-lint = [
-    { name = "homeassistant" },
-    { name = "mypy" },
-    { name = "prek" },
-    { name = "ruff" },
-    { name = "types-cffi" },
-    { name = "types-greenlet" },
-    { name = "types-pymysql" },
-    { name = "types-pyrfc3339" },
-    { name = "types-python-dateutil" },
-    { name = "types-pyyaml" },
-    { name = "types-requests" },
-    { name = "types-setuptools" },
-    { name = "uv" },
-]
-pytest = [
-    { name = "homeassistant" },
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "pytest-homeassistant-custom-component" },
-    { name = "pytest-timeout" },
-]
-
-[package.metadata]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "homeassistant", specifier = ">=2026.10" },
-    { name = "mypy" },
-    { name = "prek" },
-    { name = "pytest", specifier = ">=9" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "pytest-homeassistant-custom-component", specifier = ">=0.13.317" },
-    { name = "pytest-timeout" },
-    { name = "ruff" },
-    { name = "types-cffi" },
-    { name = "types-greenlet" },
-    { name = "types-pymysql" },
-    { name = "types-pyrfc3339" },
-    { name = "types-python-dateutil" },
-    { name = "types-pyyaml" },
-    { name = "types-requests" },
-    { name = "types-setuptools" },
-    { name = "uv", specifier = ">=0.13.4" },
-]
-ha = [{ name = "homeassistant", specifier = ">=2026.10" }]
-lint = [
-    { name = "homeassistant", specifier = ">=2026.10" },
-    { name = "mypy" },
-    { name = "prek" },
-    { name = "ruff" },
-    { name = "types-cffi" },
-    { name = "types-greenlet" },
-    { name = "types-pymysql" },
-    { name = "types-pyrfc3339" },
-    { name = "types-python-dateutil" },
-    { name = "types-pyyaml" },
-    { name = "types-requests" },
-    { name = "types-setuptools" },
-    { name = "uv", specifier = ">=0.13.4" },
-]
-pytest = [
-    { name = "homeassistant", specifier = ">=2026.10" },
-    { name = "pytest", specifier = ">=9" },
-    { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
-    { name = "pytest-homeassistant-custom-component", specifier = ">=0.13.317" },
-    { name = "pytest-timeout" },
 ]
 
 [[package]]
