@@ -377,6 +377,55 @@ async def test_get_holiday_service_matches_and_validates_names(
     assert not hass.services.has_service(DOMAIN, "get_holiday")
 
 
+async def test_get_holiday_service_matches_calendar_names_with_outer_whitespace(
+    hass: HomeAssistant, rules_file: Path, freezer: FrozenDateTimeFactory
+) -> None:
+    """Match a padded calendar summary while preserving its display name.
+
+    Args:
+        hass (HomeAssistant): Home Assistant instance.
+        rules_file (Path): Personal rules file prepared by the fixture.
+        freezer (FrozenDateTimeFactory): Clock used to control the date during the test.
+    """
+    freezer.move_to("2026-10-24T12:00:00Z")
+
+    async def get_events(call: ServiceCall) -> dict[str, Any]:
+        return {
+            "calendar.family": {
+                "events": [
+                    {
+                        "summary": "  Calendar party  ",
+                        "start": "2026-10-25",
+                        "end": "2026-10-26",
+                    }
+                ]
+            }
+        }
+
+    hass.services.async_register(
+        "calendar", "get_events", get_events, supports_response=SupportsResponse.ONLY
+    )
+    await setup_entry(hass, rules_file=rules_file.name, calendars=["calendar.family"])
+
+    result = await hass.services.async_call(
+        DOMAIN,
+        "get_holiday",
+        {"name": "Calendar party"},
+        blocking=True,
+        return_response=True,
+    )
+
+    assert result == {
+        "name": "  Calendar party  ",
+        "date": "2026-10-25",
+        "days_until": 1,
+        "weekday": "Sunday",
+        "source": "calendar",
+        "end_date": "2026-10-26",
+        "calendar_entity_id": "calendar.family",
+    }
+
+
 async def test_next_holiday_leap_day_rollover(
     hass: HomeAssistant, rules_file: Path, freezer: FrozenDateTimeFactory
 ) -> None:

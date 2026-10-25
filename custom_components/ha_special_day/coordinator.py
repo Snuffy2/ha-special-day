@@ -175,7 +175,7 @@ class SpecialDayCoordinator(DataUpdateCoordinator[SpecialDayData]):
             raise ServiceValidationError("Cannot refresh holiday dates")
         normalized = name.strip().casefold()
         for holiday in self.data.holidays:
-            if holiday.name.casefold() == normalized:
+            if holiday.name.strip().casefold() == normalized:
                 return holiday.as_dict(self.data.checked.date())
         raise ServiceValidationError(f"No upcoming holiday found for {name!r}")
 
