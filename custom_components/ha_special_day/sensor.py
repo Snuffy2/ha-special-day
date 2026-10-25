@@ -53,11 +53,17 @@ class SpecialDaySensor(SpecialDayEntity, SensorEntity):
             dict[str, Any]: Next special day details and calendar read errors.
         """
         data = self.coordinator.data
-        holiday = (
-            data.next_holidays[0].as_dict(data.checked.date())
-            if data.next_holidays
-            else {"name": None, "date": None}
-        )
+        holiday: dict[str, Any] = {"name": None, "date": None}
+        if data.next_holidays:
+            occasion = data.next_holidays[0]
+            holiday = occasion.as_dict(data.checked.date())
+            # The frontend treats ISO date-only attributes as UTC timestamps,
+            # shifting their displayed day in timezones west of UTC. Calendar
+            # text keeps these all-day dates independent of any timezone.
+            holiday["date"] = f"{occasion.day:%B} {occasion.day.day}, {occasion.day.year}"
+            if occasion.end_date is not None:
+                end = occasion.end_date
+                holiday["end_date"] = f"{end:%B} {end.day}, {end.year}"
         return {
             **holiday,
             "last_checked": data.checked.isoformat(),

@@ -120,7 +120,7 @@ async def test_calendar_merge(
     assert next_holiday.state == "365"
     assert next_holiday.attributes["friendly_name"] == "Special Day Next special day"
     assert next_holiday.attributes["name"] == "Test Day"
-    assert next_holiday.attributes["date"] == "2027-10-24"
+    assert next_holiday.attributes["date"] == "October 24, 2027"
     assert next_holiday.attributes["source"] == "rule"
     # A multi-day calendar event that started before today stays on the binary
     # sensor, but it is not a future holiday for the countdown sensor.
@@ -221,10 +221,12 @@ async def test_calendar_recovery_and_full_description(
     assert state.attributes["calendar_errors"] == []
 
 
+@pytest.mark.parametrize("timezone", ["America/New_York", "UTC", "Pacific/Kiritimati"])
 async def test_next_holiday_selects_first_tied_holiday(
     hass: HomeAssistant,
     rules_file: Path,
     freezer: FrozenDateTimeFactory,
+    timezone: str,
 ) -> None:
     """Expose individual details for the first holiday on the earliest future date.
 
@@ -232,8 +234,10 @@ async def test_next_holiday_selects_first_tied_holiday(
         hass (HomeAssistant): Home Assistant instance.
         rules_file (Path): Personal rules file prepared by the fixture.
         freezer (FrozenDateTimeFactory): Clock used to control the date during the test.
+        timezone (str): Home Assistant timezone used to check date presentation.
     """
-    freezer.move_to("2026-10-24T12:00:00Z")
+    freezer.move_to("2026-10-24T05:00:00Z")
+    await hass.config.async_set_time_zone(timezone)
     await hass.async_add_executor_job(
         rules_file.write_text,
         json.dumps(
@@ -262,14 +266,26 @@ async def test_next_holiday_selects_first_tied_holiday(
 
     next_holiday = hass.states.get("sensor.special_day_next_special_day")
     assert next_holiday.state == "1"
-    assert next_holiday.attributes["date"] == "2026-10-25"
+    assert next_holiday.attributes["date"] == "October 25, 2026"
     assert next_holiday.attributes["days_until"] == 1
     assert next_holiday.attributes["weekday"] == "Sunday"
     assert next_holiday.attributes["source"] == "calendar"
     assert next_holiday.attributes["calendar_entity_id"] == "calendar.family"
     assert next_holiday.attributes["name"] == "Calendar party"
-    assert next_holiday.attributes["end_date"] == "2026-10-26"
+    assert next_holiday.attributes["end_date"] == "October 26, 2026"
     assert "holidays" not in next_holiday.attributes
+
+    # Sensor dates are calendar text for the frontend; action dates stay ISO.
+    result = await hass.services.async_call(
+        DOMAIN,
+        "get_holiday",
+        {"name": "Calendar party"},
+        blocking=True,
+        return_response=True,
+    )
+    assert result["date"] == "2026-10-25"
+    assert result["end_date"] == "2026-10-26"
+    assert result["days_until"] == 1
 
 
 async def test_next_holiday_unknown_when_rules_are_empty(
@@ -452,7 +468,7 @@ async def test_next_holiday_leap_day_rollover(
     await setup_entry(hass, rules_file=rules_file.name)
     state = hass.states.get("sensor.special_day_next_special_day")
     assert state.state == "1"
-    assert state.attributes["date"] == "2028-02-29"
+    assert state.attributes["date"] == "February 29, 2028"
 
     freezer.move_to("2028-02-29T12:00:00Z")
     response = await hass.services.async_call(
@@ -466,7 +482,7 @@ async def test_next_holiday_leap_day_rollover(
     assert response["days_until"] == 0
     state = hass.states.get("sensor.special_day_next_special_day")
     assert state.state == "1461"
-    assert state.attributes["date"] == "2032-02-29"
+    assert state.attributes["date"] == "February 29, 2032"
 
 
 async def test_setup_removes_customized_legacy_description_entity(hass: HomeAssistant) -> None:
