@@ -9,7 +9,7 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
+from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
@@ -55,12 +55,61 @@ def read_rules(hass: HomeAssistant, filename: str) -> Rules:
 
 
 @dataclass(frozen=True)
+class Holiday:
+    """A dated named occasion from a rule or selected calendar."""
+
+    name: str
+    day: date
+    source: str
+    end_date: date | None = None
+    calendar_entity_id: str | None = None
+
+    def as_dict(self, today: date) -> dict[str, Any]:
+        """Return JSON-compatible holiday details.
+
+        Args:
+            today (date): Local date used for the countdown.
+
+        Returns:
+            dict[str, Any]: Name, date, countdown, weekday, and source details.
+        """
+        details: dict[str, Any] = {
+            "name": self.name,
+            "date": self.day.isoformat(),
+            "days_until": (self.day - today).days,
+            "weekday": self.day.strftime("%A"),
+            "source": self.source,
+        }
+        if self.end_date is not None:
+            details["end_date"] = self.end_date.isoformat()
+        if self.calendar_entity_id is not None:
+            details["calendar_entity_id"] = self.calendar_entity_id
+        return details
+
+
+def format_event_names(events: list[str]) -> str:
+    """Join occasion names into readable text.
+
+    Args:
+        events (list[str]): Occasion names in display order.
+
+    Returns:
+        str: All occasion names joined with commas and a final conjunction.
+    """
+    if len(events) < 2:
+        return "".join(events)
+    return ", ".join(events[:-1]) + " and " + events[-1]
+
+
+@dataclass(frozen=True)
 class SpecialDayData:
-    """A complete snapshot of today's occasions."""
+    """Today's occasions and the known upcoming holiday dates."""
 
     events: list[str]
     checked: datetime
     calendar_errors: list[str]
+    holidays: list[Holiday]
+    next_holidays: list[Holiday]
 
     @property
     def description(self) -> str:
@@ -69,9 +118,7 @@ class SpecialDayData:
         Returns:
             str: Complete human-readable description.
         """
-        if len(self.events) < 2:
-            return "".join(self.events)
-        return ", ".join(self.events[:-1]) + " and " + self.events[-1]
+        return format_event_names(self.events)
 
 
 class SpecialDayCoordinator(DataUpdateCoordinator[SpecialDayData]):
@@ -123,6 +170,29 @@ class SpecialDayCoordinator(DataUpdateCoordinator[SpecialDayData]):
             self.rules = candidate
             self.async_set_updated_data(data)
 
+    async def async_get_holiday(self, name: str) -> dict[str, Any]:
+        """Refresh and find the next occurrence of a named holiday, including today.
+
+        Args:
+            name (str): Full holiday name, matched without case or outer whitespace.
+
+        Returns:
+            dict[str, Any]: JSON-compatible details of the earliest matching occurrence.
+
+        Raises:
+            ServiceValidationError: Refresh failed, the name is blank, or no upcoming match exists.
+        """
+        await self.async_refresh()
+        if not self.last_update_success:
+            raise ServiceValidationError("Cannot refresh holiday dates")
+        normalized = name.strip().casefold()
+        if not normalized:
+            raise ServiceValidationError("Holiday name must not be blank")
+        for holiday in self.data.holidays:
+            if holiday.name.strip().casefold() == normalized:
+                return holiday.as_dict(self.data.checked.date())
+        raise ServiceValidationError(f"No upcoming holiday found for {name!r}")
+
     async def _async_update_data(self) -> SpecialDayData:
         """Calculate from the last successfully loaded rules.
 
@@ -138,20 +208,23 @@ class SpecialDayCoordinator(DataUpdateCoordinator[SpecialDayData]):
             return await self._calculate(self.rules)
 
     async def _calculate(self, rules: Rules) -> SpecialDayData:
-        """Merge all-day calendar events with today's calculated rules.
+        """Merge today's status and future holidays from rules and all-day calendars.
 
         Args:
             rules (Rules): Validated rule evaluator.
 
         Returns:
-            SpecialDayData: Merged local and calendar occasion snapshot.
+            SpecialDayData: Today's occasions, upcoming holiday details, and calendar errors.
         """
         now = dt_util.now()
         day = now.date()
+        tomorrow = day + timedelta(days=1)
+        holidays = [Holiday(name, when, "rule") for name, when in rules.next_occurrences(day)]
+        future = [Holiday(name, when, "rule") for name, when in rules.next_occurrences(tomorrow)]
         events: list[str] = []
         errors: list[str] = []
         start = datetime.combine(day, time.min, tzinfo=now.tzinfo)
-        end = datetime.combine(day + timedelta(days=1), time.min, tzinfo=now.tzinfo)
+        end = datetime.combine(day + timedelta(days=367), time.min, tzinfo=now.tzinfo)
         for entity_id in self.calendars:
             try:
                 async with asyncio.timeout(30):
@@ -166,24 +239,33 @@ class SpecialDayCoordinator(DataUpdateCoordinator[SpecialDayData]):
                         blocking=True,
                         return_response=True,
                     )
-                events.extend(calendar_events(response, entity_id, day))
+                calendar = calendar_holidays(response, entity_id)
+                events.extend(
+                    holiday.name
+                    for holiday in calendar
+                    if holiday.end_date is not None and holiday.day <= day < holiday.end_date
+                )
+                holidays.extend(holiday for holiday in calendar if day <= holiday.day < end.date())
+                future.extend(holiday for holiday in calendar if day < holiday.day < end.date())
             except (HomeAssistantError, TimeoutError) as err:
                 _LOGGER.warning("Cannot read ha-special-day calendar %s: %s", entity_id, err)
                 errors.append(entity_id)
         events.extend(rules.events_on(day, include_fallback=not events))
-        return SpecialDayData(list(dict.fromkeys(events)), now, errors)
+        holidays.sort(key=lambda holiday: (holiday.day, holiday.name, holiday.source))
+        future.sort(key=lambda holiday: (holiday.day, holiday.name, holiday.source))
+        next_holidays = [holiday for holiday in future if holiday.day == future[0].day]
+        return SpecialDayData(list(dict.fromkeys(events)), now, errors, holidays, next_holidays)
 
 
-def calendar_events(response: object, entity_id: str, day: date) -> list[str]:
-    """Validate calendar response shapes and select overlapping all-day events.
+def calendar_holidays(response: object, entity_id: str) -> list[Holiday]:
+    """Validate calendar response shapes and select dated all-day events.
 
     Args:
         response (object): Response returned by the calendar get_events action.
         entity_id (str): Calendar entity requested in the service call.
-        day (date): Local date whose all-day events should be selected.
 
     Returns:
-        list[str]: Names of overlapping all-day events.
+        list[Holiday]: All-day calendar occurrences with their actual start and end dates.
 
     Raises:
         HomeAssistantError: Rules could not be reloaded or calendar response data is invalid.
@@ -193,7 +275,7 @@ def calendar_events(response: object, entity_id: str, day: date) -> list[str]:
     raw_events = response[entity_id].get("events")
     if not isinstance(raw_events, list):
         raise HomeAssistantError("Calendar response has no event list")
-    events: list[str] = []
+    events: list[Holiday] = []
     for event in raw_events:
         if not isinstance(event, dict):
             raise HomeAssistantError("Calendar returned an invalid event")
@@ -203,6 +285,6 @@ def calendar_events(response: object, entity_id: str, day: date) -> list[str]:
         event_start = dt_util.parse_date(start)
         event_end = dt_util.parse_date(end)
         # Timed events have datetime strings rather than date-only values.
-        if event_start and event_end and event_start <= day < event_end and summary:
-            events.append(summary)
+        if event_start and event_end and event_start < event_end and summary.strip():
+            events.append(Holiday(summary, event_start, "calendar", event_end, entity_id))
     return events

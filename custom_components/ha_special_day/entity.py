@@ -10,7 +10,7 @@ from .coordinator import SpecialDayCoordinator
 
 
 class SpecialDayEntity(CoordinatorEntity[SpecialDayCoordinator]):
-    """Expose consistent occasion data on both entities."""
+    """Expose today's occasion data and the shared device identity."""
 
     _attr_has_entity_name = True
     _attr_icon = "mdi:calendar-star"
@@ -29,7 +29,7 @@ class SpecialDayEntity(CoordinatorEntity[SpecialDayCoordinator]):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Expose the full list even when the sensor state needs truncation.
+        """Expose today's complete occasion list and description.
 
         Returns:
             dict[str, Any]: Complete occasion data and calendar error identifiers.
@@ -37,7 +37,7 @@ class SpecialDayEntity(CoordinatorEntity[SpecialDayCoordinator]):
         data = self.coordinator.data
         return {
             "events": data.events,
-            "description": data.description,
+            "name": data.description,
             "last_checked": data.checked.isoformat(),
             "calendar_errors": data.calendar_errors,
         }

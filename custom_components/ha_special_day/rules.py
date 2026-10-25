@@ -103,6 +103,63 @@ class Rules:
                 events.append(fallback)
         return events
 
+    def next_occurrences(self, day: date) -> list[tuple[str, date]]:
+        """Return the next occurrence for each included annual rule or bank holiday.
+
+        Annual rules are checked by anchor year rather than by scanning each
+        calendar day. The anchor range includes adjacent years needed by
+        configured offsets, and the search is bounded to eight years ahead so
+        leap-day rules still find their next occurrence across 2100.
+
+        Args:
+            day (date): First date eligible for an occurrence.
+
+        Returns:
+            list[tuple[str, date]]: Earliest occurrence on or after ``day`` for
+            each included name, ordered by occurrence date and then name.
+        """
+        end_year = min(9999, day.year + 8)
+        end_date = date(
+            end_year,
+            day.month,
+            min(day.day, calendar.monthrange(end_year, day.month)[1]),
+        )
+        occurrences: dict[str, date] = {}
+
+        if self._expressions:
+            cache: dict[tuple[str, int], date | None] = {}
+            first_anchor_year = max(1, day.year - self._anchor_radius)
+            last_anchor_year = min(9999, end_year + self._anchor_radius)
+            for name in self._expressions:
+                if name in self._excluded:
+                    continue
+                for anchor_year in range(first_anchor_year, last_anchor_year + 1):
+                    candidate = _evaluate(name, anchor_year, self._expressions, cache)
+                    if candidate is None or candidate < day or candidate > end_date:
+                        continue
+                    current = occurrences.get(name)
+                    if current is None or candidate < current:
+                        occurrences[name] = candidate
+
+        if self._bank_holidays:
+            for year in range(day.year, end_year + 1):
+                for month, day_numbers in ((1, (2, 3)), (12, (27, 28))):
+                    for day_number in day_numbers:
+                        candidate = date(year, month, day_number)
+                        if candidate < day or candidate > end_date:
+                            continue
+                        for name in _bank_holidays_on(candidate):
+                            if name in self._excluded:
+                                continue
+                            current = occurrences.get(name)
+                            if current is None or candidate < current:
+                                occurrences[name] = candidate
+
+        return sorted(
+            occurrences.items(),
+            key=lambda occurrence: (occurrence[1], occurrence[0]),
+        )
+
 
 def load_rules(path: Path | None = None) -> Rules:
     """Load bundled rules, optionally overlaid by an external JSON file.
