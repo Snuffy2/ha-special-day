@@ -116,8 +116,9 @@ async def test_calendar_merge(
         )
         for start, end in calendar_ranges
     ] == [("2026-10-24", "2027-10-26", "00:00:00", "00:00:00")] * 2
-    next_holiday = hass.states.get("sensor.special_day_next_holiday")
+    next_holiday = hass.states.get("sensor.special_day_next_special_day")
     assert next_holiday.state == "365"
+    assert next_holiday.attributes["friendly_name"] == "Special Day Next special day"
     assert next_holiday.attributes["name"] == "Test Day"
     assert next_holiday.attributes["date"] == "2027-10-24"
     assert next_holiday.attributes["source"] == "rule"
@@ -175,7 +176,7 @@ async def test_invalid_initial_file(hass: HomeAssistant) -> None:
     assert entry.state == ConfigEntryState.SETUP_ERROR
     assert not hass.services.has_service(DOMAIN, "reload_rules")
     assert hass.states.get("binary_sensor.special_day") is None
-    assert hass.states.get("sensor.special_day_next_holiday") is None
+    assert hass.states.get("sensor.special_day_next_special_day") is None
 
 
 async def test_calendar_recovery_and_full_description(
@@ -259,7 +260,7 @@ async def test_next_holiday_selects_first_tied_holiday(
     )
     await setup_entry(hass, rules_file=rules_file.name, calendars=["calendar.family"])
 
-    next_holiday = hass.states.get("sensor.special_day_next_holiday")
+    next_holiday = hass.states.get("sensor.special_day_next_special_day")
     assert next_holiday.state == "1"
     assert next_holiday.attributes["date"] == "2026-10-25"
     assert next_holiday.attributes["days_until"] == 1
@@ -294,7 +295,7 @@ async def test_next_holiday_unknown_when_rules_are_empty(
     )
     await setup_entry(hass, rules_file=empty_path.name)
 
-    empty_sensor = hass.states.get("sensor.special_day_next_holiday")
+    empty_sensor = hass.states.get("sensor.special_day_next_special_day")
     assert empty_sensor.state == "unknown"
     assert empty_sensor.attributes["name"] is None
     assert empty_sensor.attributes["date"] is None
@@ -449,7 +450,7 @@ async def test_next_holiday_leap_day_rollover(
         ),
     )
     await setup_entry(hass, rules_file=rules_file.name)
-    state = hass.states.get("sensor.special_day_next_holiday")
+    state = hass.states.get("sensor.special_day_next_special_day")
     assert state.state == "1"
     assert state.attributes["date"] == "2028-02-29"
 
@@ -463,7 +464,7 @@ async def test_next_holiday_leap_day_rollover(
     )
     await hass.async_block_till_done()
     assert response["days_until"] == 0
-    state = hass.states.get("sensor.special_day_next_holiday")
+    state = hass.states.get("sensor.special_day_next_special_day")
     assert state.state == "1461"
     assert state.attributes["date"] == "2032-02-29"
 
@@ -490,4 +491,4 @@ async def test_setup_removes_customized_legacy_description_entity(hass: HomeAssi
 
     assert registry.async_get(legacy.entity_id) is None
     assert registry.async_get_entity_id("sensor", DOMAIN, f"{entry.entry_id}_description") is None
-    assert hass.states.get("sensor.special_day_next_holiday") is not None
+    assert hass.states.get("sensor.special_day_next_special_day") is not None
