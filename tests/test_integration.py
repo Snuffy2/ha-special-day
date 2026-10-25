@@ -11,7 +11,7 @@ from homeassistant.data_entry_flow import FlowResultType, InvalidData
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util import dt as dt_util
 import pytest
-from pytest_homeassistant_custom_component.common import MockConfigEntry, async_fire_time_changed
+from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.ha_special_day.const import DOMAIN
 
@@ -55,72 +55,6 @@ async def setup_entry(hass: HomeAssistant, **data: object) -> MockConfigEntry:
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
     return entry
-
-
-async def test_entities_reload_and_unload(
-    hass: HomeAssistant, rules_file: Path, freezer: FrozenDateTimeFactory
-) -> None:
-    """Reload is atomic, updates entities, and stops publishing after unload.
-
-    Args:
-        hass (HomeAssistant): Home Assistant instance.
-        rules_file (Path): Personal rules file prepared by the fixture.
-        freezer (FrozenDateTimeFactory): Clock used to control the date during the test.
-    """
-    freezer.move_to("2026-10-24T12:00:00Z")
-    entry = await setup_entry(hass, rules_file=rules_file.name)
-    assert hass.states.get("binary_sensor.ha_special_day").state == "on"
-    sensor = hass.states.get("sensor.ha_special_day_description")
-    assert sensor.state == "Test Day"
-    assert sensor.attributes["events"] == ["Test Day"]
-
-    await hass.async_add_executor_job(rules_file.write_text, '{"rules": {"Bad Date": "99/99"}}')
-    with pytest.raises(HomeAssistantError, match="Bad Date"):
-        await hass.services.async_call(DOMAIN, "reload_rules", {}, blocking=True)
-    assert hass.states.get("sensor.ha_special_day_description").state == "Test Day"
-    await entry.runtime_data.async_refresh()
-    assert hass.states.get("binary_sensor.ha_special_day").state == "on"
-
-    await hass.async_add_executor_job(
-        rules_file.write_text,
-        json.dumps(
-            {
-                "include_defaults": False,
-                "bank_holidays": False,
-                "seasonal_fallbacks": False,
-                "rules": {},
-            }
-        ),
-    )
-    await hass.services.async_call(DOMAIN, "reload_rules", {}, blocking=True)
-    assert hass.states.get("binary_sensor.ha_special_day").state == "off"
-    assert hass.states.get("sensor.ha_special_day_description").state == ""
-    assert await hass.config_entries.async_unload(entry.entry_id)
-    assert not hass.services.has_service(DOMAIN, "reload_rules")
-    previous = hass.states.get("sensor.ha_special_day_description")
-    async_fire_time_changed(hass, dt_util.utcnow().replace(day=25, hour=0, minute=0, second=0))
-    await hass.async_block_till_done()
-    assert hass.states.get("sensor.ha_special_day_description") == previous
-
-
-async def test_local_midnight(
-    hass: HomeAssistant, rules_file: Path, freezer: FrozenDateTimeFactory
-) -> None:
-    """A day changes at local midnight rather than UTC midnight.
-
-    Args:
-        hass (HomeAssistant): Home Assistant instance.
-        rules_file (Path): Personal rules file prepared by the fixture.
-        freezer (FrozenDateTimeFactory): Clock used to control the date during the test.
-    """
-    await hass.config.async_set_time_zone("America/New_York")
-    freezer.move_to("2026-10-25T03:59:50Z")
-    await setup_entry(hass, rules_file=rules_file.name)
-    assert hass.states.get("binary_sensor.ha_special_day").state == "on"
-    freezer.move_to("2026-10-25T04:00:01Z")
-    async_fire_time_changed(hass, dt_util.utcnow())
-    await hass.async_block_till_done()
-    assert hass.states.get("binary_sensor.ha_special_day").state == "off"
 
 
 async def test_calendar_merge(

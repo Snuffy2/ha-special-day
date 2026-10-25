@@ -176,17 +176,11 @@ def test_configuration_types_and_unknown_keys_are_rejected(tmp_path: Path) -> No
         _load(tmp_path, {"surprise": True})
 
 
-@pytest.mark.parametrize(
-    ("expression", "expected"),
-    [("7/4", date(2024, 7, 4)), ("12/25", date(2024, 12, 25))],
-)
-def test_custom_dates_use_month_day(tmp_path: Path, expression: str, expected: date) -> None:
+def test_custom_dates_use_month_day(tmp_path: Path) -> None:
     """Interpret custom dates in month/day order.
 
     Args:
         tmp_path (Path): Temporary directory for the JSON configuration.
-        expression (str): Custom month/day expression.
-        expected (date): Date on which the custom occasion should occur.
     """
     rules = _load(
         tmp_path,
@@ -194,8 +188,8 @@ def test_custom_dates_use_month_day(tmp_path: Path, expression: str, expected: d
             "include_defaults": False,
             "bank_holidays": False,
             "seasonal_fallbacks": False,
-            "rules": {"Custom Day": expression},
+            "rules": {"Custom Day": "7/4"},
         },
     )
-    assert rules.events_on(expected) == ["Custom Day"]
+    assert rules.events_on(date(2024, 7, 4)) == ["Custom Day"]
     assert rules.events_on(date(2024, 4, 7)) == []

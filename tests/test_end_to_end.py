@@ -84,7 +84,6 @@ async def test_personal_rules_user_journey(
         user_client (TestClient): Authenticated Home Assistant HTTP client.
         freezer (FrozenDateTimeFactory): Controlled clock.
     """
-    freezer.move_to("2026-10-24T12:00:00Z")
     path = Path(hass.config.path("occasions.json"))
     settings = {
         "include_defaults": False,
@@ -108,6 +107,17 @@ async def test_personal_rules_user_journey(
     assert response.status == 500
     response = await user_client.get("/api/states/sensor.ha_special_day_description")
     assert (await response.json())["state"] == "Our anniversary"
+
+    # A rejected file must not replace the rules used by automatic refreshes.
+    freezer.move_to("2026-10-24T12:15:01Z")
+    async_fire_time_changed(hass, dt_util.utcnow())
+    await hass.async_block_till_done()
+    response = await user_client.get("/api/states/sensor.ha_special_day_description")
+    sensor = await response.json()
+    assert sensor["state"] == "Our anniversary"
+    assert dt_util.parse_datetime(sensor["attributes"]["last_checked"]) >= dt_util.parse_datetime(
+        "2026-10-24T12:15:00Z"
+    )
 
     settings["rules"] = {"Family celebration": "10/24"}
     await hass.async_add_executor_job(path.write_text, json.dumps(settings))
@@ -159,7 +169,6 @@ async def test_local_calendar_user_journey(
         freezer (FrozenDateTimeFactory): Controlled clock.
     """
     await hass.config.async_set_time_zone("America/New_York")
-    freezer.move_to("2026-10-25T03:40:00Z")
     await create_integration(user_client, "local_calendar", {"calendar_name": "Family"})
     await hass.async_block_till_done()
     path = Path(hass.config.path("calendar_only.json"))
