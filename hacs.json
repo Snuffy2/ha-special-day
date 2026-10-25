@@ -1,6 +1,6 @@
 {
   "name": "ha-special-day",
-  "homeassistant": "2026.10.0",
+  "homeassistant": "2026.3.0",
   "zip_release": true,
   "filename": "ha_special_day.zip"
 }

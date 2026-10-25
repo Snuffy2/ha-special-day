@@ -4,14 +4,7 @@ A small Home Assistant custom integration that calculates today's occasions and
 creates its own entities. Personal holiday rules live in a separate JSON file so
 integration updates do not overwrite your changes.
 
-This integration originated from [the Special Day project by
-philmale](https://github.com/philmale/special-day). Special thanks to its author
-and contributors for the original script, holiday rules, and date calculations
-that this integration builds on.
-
 ## Install
-
-Requires Home Assistant **2026.10 or newer** (Python 3.14.2 or newer).
 
 1. Copy `custom_components/ha_special_day` into your Home Assistant
    `/config/custom_components/` folder.
@@ -44,9 +37,9 @@ Create `/config/ha_special_day_rules.json`, for example:
 {
   "include_defaults": true,
   "rules": {
-    "Our anniversary": "14/7",
+    "Our anniversary": "7/14",
     "Pancake Day": "Easter-47d",
-    "Thanksgiving": "1/11+4@thu",
+    "Thanksgiving": "11/1+4@thu",
     "Black Friday": "Thanksgiving+1d"
   },
   "exclude": ["Blue Monday"],
@@ -78,20 +71,20 @@ restart. Editing the file alone does not reload it.
 
 ### Date expressions
 
-Use a base date (`D/M`), `Easter` (Gregorian Easter Sunday), or another rule's exact
+Use a base date (`M/D`), `Easter` (Gregorian Easter Sunday), or another rule's exact
 name, followed by optional offsets. Fixed dates recur annually. A February 29 rule
 is skipped in non-leap years. Named references cannot be circular. Total offsets along a reference chain are
 limited to a conservative 3,660-day bound (months count as 31 days for this check).
 
 | Expression | Meaning |
 | --- | --- |
-| `25/12` | December 25 |
+| `12/25` | December 25 |
 | `Easter-47d` | 47 days before Easter |
-| `6/5+2w` | Two weeks after May 6 |
-| `31/1+1m` | One calendar month later, clamped to the last day of February |
-| `1/5+1@mon` | First Monday on or after May 1 |
-| `31/3-1@sun` | Last Sunday on or before March 31 |
-| `1/11+4@thu+1d` | Friday following the fourth Thursday of November |
+| `5/6+2w` | Two weeks after May 6 |
+| `1/31+1m` | One calendar month later, clamped to the last day of February |
+| `5/1+1@mon` | First Monday on or after May 1 |
+| `3/31-1@sun` | Last Sunday on or before March 31 |
+| `11/1+4@thu+1d` | Friday following the fourth Thursday of November |
 | `Thanksgiving+1d` | One day after the rule named Thanksgiving |
 
 Weekday names are `mon`, `tue`, `wed`, `thu`, `fri`, `sat`, `sun` (case insensitive).
@@ -129,30 +122,6 @@ sensor's `description` attribute. Status is already current at midnight; checkin
 it never announces anything. If you need only one announcement per day across
 multiple triggers, manage that in the announcement automation with a date helper.
 
-## Migrating from the script
-
-The original [special_day.yaml](special_day.yaml) remains available as a legacy
-script. It is independent of this integration and requires all three helpers:
-`input_boolean.special_day`, `input_text.special_day_text`, and
-`input_datetime.special_day_last_checked`.
-
-To migrate:
-
-1. Move personal name/date entries from the script's `special_days` dictionary to
-   the JSON file's `rules` object. Use `exclude` for bundled names you removed.
-2. Set up the integration and verify its entities and occasions.
-3. Update automations, scripts, and dashboards from `input_boolean.special_day`
-   to the new binary sensor, and from `input_text.special_day_text` to the new
-   description sensor (or its full `description` attribute).
-4. Remove calls to `script.check_for_special_day` from announcement and lighting
-   automations. Schedule those actions independently.
-5. Disable the old daily check automation and remove its helpers only after
-   checking that no other automations reference them.
-
-The old last-checked helper controlled script/announcement execution. The new
-`last_checked` attribute is informational; it does not deduplicate announcements.
-The integration does not import or rename existing helpers automatically.
-
 ## Development
 
 ```sh
@@ -175,3 +144,10 @@ Tooling and GitHub workflows follow the local Places integration baseline. The
 consistency, Hassfest/HACS validation, dependency updates, PR labels and titles,
 and releases. See [.github/RELEASING.md](.github/RELEASING.md) for release behavior
 and the repository secrets used by the inherited automation.
+
+## Attribution
+
+This integration originated from [the Special Day project by
+philmale](https://github.com/philmale/special-day). Special thanks to its author
+and contributors for the original script, holiday rules, and date calculations
+that this integration builds on.

@@ -6,28 +6,28 @@ from homeassistant import config_entries
 from homeassistant.config_entries import ConfigFlowResult
 from homeassistant.core import callback
 from homeassistant.helpers import selector
-import probatio
+import voluptuous as vol
 
 from .const import CONF_CALENDARS, CONF_RULES_FILE, DOMAIN
 from .coordinator import read_rules
 from .rules import RuleError
 
 
-def options_schema(options: dict[str, Any]) -> probatio.Schema:
+def options_schema(options: dict[str, Any]) -> vol.Schema:
     """Describe a personal rules path and optional calendar entities.
 
     Args:
         options (dict[str, Any]): Selected personal rules file and calendars.
 
     Returns:
-        probatio.Schema: Schema for the integration settings form.
+        vol.Schema: Schema for the integration settings form.
     """
-    return probatio.Schema(
+    return vol.Schema(
         {
-            probatio.Optional(
+            vol.Optional(
                 CONF_RULES_FILE, default=options.get(CONF_RULES_FILE, "")
             ): selector.TextSelector(),
-            probatio.Optional(
+            vol.Optional(
                 CONF_CALENDARS, default=options.get(CONF_CALENDARS, [])
             ): selector.EntitySelector(
                 selector.EntitySelectorConfig(domain="calendar", multiple=True)
@@ -66,7 +66,8 @@ class SpecialDayConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 return self.async_create_entry(title="ha-special-day", data=user_input)
         return self.async_show_form(
             step_id="user",
-            data_schema=options_schema(user_input or {}),
+            # Home Assistant aliases voluptuous to probatio at runtime.
+            data_schema=options_schema(user_input or {}),  # type: ignore[arg-type]
             errors=errors,
             description_placeholders=placeholders,
         )
@@ -114,7 +115,8 @@ class SpecialDayOptionsFlow(config_entries.OptionsFlow):
         current = dict(self.config_entry.options or self.config_entry.data)
         return self.async_show_form(
             step_id="init",
-            data_schema=options_schema(user_input if user_input is not None else current),
+            # Home Assistant aliases voluptuous to probatio at runtime.
+            data_schema=options_schema(user_input if user_input is not None else current),  # type: ignore[arg-type]
             errors=errors,
             description_placeholders=placeholders,
         )

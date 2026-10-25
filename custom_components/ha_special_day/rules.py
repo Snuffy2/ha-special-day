@@ -109,7 +109,7 @@ def load_rules(path: Path | None = None) -> Rules:
 
     The external object accepts ``include_defaults``, ``rules``, ``exclude``,
     ``bank_holidays`` and ``seasonal_fallbacks``. Rule expressions support
-    fixed ``D/M`` dates, Easter, named rule references, and chained offsets.
+    fixed ``M/D`` dates, Easter, named rule references, and chained offsets.
 
     Args:
         path (Path | None): Optional JSON configuration path.
@@ -233,7 +233,7 @@ def _parse_expression(name: str, expression: str, rules: dict[str, str]) -> _Exp
 
     fixed = _DATE_BASE.match(value)
     if fixed:
-        day, month = int(fixed.group(1)), int(fixed.group(2))
+        month, day = int(fixed.group(1)), int(fixed.group(2))
         try:
             date(2000, month, day)  # Leap-day expressions are valid in leap anchor years.
         except ValueError as error:

@@ -7,7 +7,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import ConfigEntryError
 from homeassistant.helpers.event import async_track_time_change
-import probatio
+import voluptuous as vol
 
 from .const import DOMAIN
 from .coordinator import SpecialDayCoordinator
@@ -59,7 +59,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: SpecialDayConfigEntry) -
         async_track_time_change(hass, refresh_at_midnight, hour=0, minute=0, second=0)
     )
     entry.async_on_unload(entry.add_update_listener(async_options_updated))
-    hass.services.async_register(DOMAIN, "reload_rules", reload_rules, schema=probatio.Schema({}))
+    # Home Assistant aliases voluptuous to probatio at runtime in newer releases.
+    hass.services.async_register(
+        DOMAIN,
+        "reload_rules",
+        reload_rules,
+        schema=vol.Schema({}),  # type: ignore[arg-type]
+    )
     return True
 
 
