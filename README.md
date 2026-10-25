@@ -43,7 +43,7 @@ use. Existing installations retain their registered entity IDs when a sensor
 name changes. The binary sensor has these attributes:
 
 - `events`: the full list of today's occasion names.
-- `description`: today's complete readable text.
+- `name`: today's complete readable text, using the same attribute name as the next special day sensor.
 - `last_checked`: when the integration last checked the date and calendars.
 - `calendar_errors`: calendar entity IDs that could not be read on the latest check.
 
@@ -70,7 +70,8 @@ not need a helper or a daily automation to keep the entities current.
 
 The former description sensor is removed automatically on upgrade. Update any
 automations or dashboard cards that used it to read the binary sensor's
-`description` attribute instead.
+`name` attribute instead. The binary sensor's former `description` attribute is
+now named `name`; update existing templates that reference `description`.
 
 ### Look up a holiday
 
@@ -215,7 +216,7 @@ read does not keep events from its previous successful check.
 
 For example, you can make a Home Assistant automation that runs at 08:00,
 checks that `binary_sensor.special_day` is `on`, and uses the
-`description` attribute of `binary_sensor.special_day` in an
+`name` attribute of `binary_sensor.special_day` in an
 announcement. The binary sensor is already current at midnight; it does not announce
 anything by itself. If an automation has several triggers, use a date helper
 in that automation if you want to limit it to one announcement per day.

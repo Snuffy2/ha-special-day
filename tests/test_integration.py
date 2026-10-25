@@ -106,6 +106,8 @@ async def test_calendar_merge(
     )
     attrs = hass.states.get("binary_sensor.special_day").attributes
     assert sorted(attrs["events"]) == ["Birthday", "Test Day", "Trip"]
+    assert attrs["name"] == "Birthday, Trip and Test Day"
+    assert "description" not in attrs
     assert attrs["calendar_errors"] == ["calendar.broken"]
     assert [
         (
@@ -205,7 +207,7 @@ async def test_calendar_recovery_and_full_description(
     )
     await setup_entry(hass, rules_file=rules_file.name, calendars=["calendar.family"])
     state = hass.states.get("binary_sensor.special_day")
-    assert "Lent" in state.attributes["description"]
+    assert "Lent" in state.attributes["name"]
     assert state.attributes["calendar_errors"] == ["calendar.family"]
 
     response = {
@@ -217,7 +219,7 @@ async def test_calendar_recovery_and_full_description(
     async_fire_time_changed(hass, dt_util.utcnow())
     await hass.async_block_till_done()
     state = hass.states.get("binary_sensor.special_day")
-    assert state.attributes["description"] == calendar_name
+    assert state.attributes["name"] == calendar_name
     assert state.attributes["events"] == [calendar_name]
     assert state.attributes["calendar_errors"] == []
 

@@ -37,7 +37,7 @@ class SpecialDayEntity(CoordinatorEntity[SpecialDayCoordinator]):
         data = self.coordinator.data
         return {
             "events": data.events,
-            "description": data.description,
+            "name": data.description,
             "last_checked": data.checked.isoformat(),
             "calendar_errors": data.calendar_errors,
         }
