@@ -193,16 +193,21 @@ def test_lent_and_advent_fallbacks_can_be_disabled_or_excluded(tmp_path: Path) -
 @pytest.mark.parametrize(
     ("rules", "message"),
     [
-        pytest.param({"bad": "2/31"}, "bad", id="invalid-day"),
+        pytest.param({"bad": "2/31"}, "bad.*invalid fixed date", id="invalid-day"),
         pytest.param({"bad": "25/12"}, "bad", id="reversed-month-day"),
         pytest.param({"bad": "Missing Rule+1d"}, "bad", id="unknown-reference"),
-        pytest.param({"bad": "1/1+1q"}, "bad", id="invalid-offset-unit"),
+        pytest.param({"bad": "1/1+1q"}, "bad.*invalid suffix", id="invalid-offset-unit"),
         pytest.param({"bad": "1/1+" + "9" * 200 + "d"}, "bad", id="oversized-offset"),
         pytest.param({"bad": "1/1+2000d+2000d"}, "bad", id="cumulative-offset"),
         pytest.param(
             {"base": "1/1+2000d", "bad": "base+2000d"}, "bad", id="reference-chain-offset"
         ),
         pytest.param({"first": "second+1d", "second": "first-1w"}, "cycl", id="cyclic-reference"),
+        pytest.param(
+            {"7/14 anniversary": "Easter+1d event", "Easter+1d event": "7/14 anniversary+1d"},
+            "cycl",
+            id="literal-prefixed-names-real-cycle",
+        ),
     ],
 )
 def test_invalid_rules_raise_entry_specific_errors(
@@ -254,7 +259,7 @@ def test_custom_dates_use_month_day(tmp_path: Path) -> None:
 
 
 def test_numeric_and_easter_prefixed_named_references(tmp_path: Path) -> None:
-    """Resolve date- and Easter-prefixed names before interpreting literals.
+    """Resolve names with extra text while preserving complete literals.
 
     Args:
         tmp_path (Path): Temporary directory for the JSON configuration.
@@ -291,3 +296,65 @@ def test_numeric_and_easter_prefixed_named_references(tmp_path: Path) -> None:
     )
     assert "Day after" not in excluded.events_on(date(2024, 7, 15))
     assert "Following Easter event" not in excluded.events_on(date(2024, 4, 4))
+
+
+@pytest.mark.parametrize(
+    ("entries", "expected_day", "displaced_day", "expected_names"),
+    [
+        pytest.param(
+            {"12/25": "7/4"},
+            date(2024, 12, 25),
+            date(2024, 7, 4),
+            {"Christmas Day"},
+            id="bundled-christmas",
+        ),
+        pytest.param(
+            {"Easter+1d": "7/4", "Ordinary Easter Monday": "Easter+1d"},
+            date(2024, 4, 1),
+            date(2024, 7, 4),
+            {"Easter Monday", "Ordinary Easter Monday"},
+            id="bundled-and-custom-easter",
+        ),
+        pytest.param(
+            {"7/14": "Alias", "Alias": "7/14"},
+            date(2024, 7, 14),
+            date(2024, 8, 1),
+            {"7/14", "Alias"},
+            id="literal-breaks-false-cycle",
+        ),
+        pytest.param(
+            {"7/14": "8/1", "7/14+1d": "7/14+1d"},
+            date(2024, 7, 15),
+            date(2024, 8, 2),
+            {"7/14+1d"},
+            id="self-named-offset-literal",
+        ),
+        pytest.param(
+            {"7/14+1d": "8/1", "Day after": "7/14+1d+1d"},
+            date(2024, 7, 16),
+            date(2024, 8, 2),
+            {"Day after"},
+            id="literal-before-longest-named-base",
+        ),
+    ],
+)
+def test_complete_literals_take_precedence_over_rule_names(
+    tmp_path: Path,
+    entries: dict[str, str],
+    expected_day: date,
+    displaced_day: date,
+    expected_names: set[str],
+) -> None:
+    """Keep literal dates stable when custom names collide with expressions.
+
+    Args:
+        tmp_path (Path): Temporary directory for the JSON configuration.
+        entries (dict[str, str]): Custom rules containing literal-shaped names.
+        expected_day (date): Date required by the literal expression.
+        displaced_day (date): Date produced by incorrectly resolving a name.
+        expected_names (set[str]): Events that must retain their literal dates.
+    """
+    rules = _load(tmp_path, {"rules": entries})
+
+    assert expected_names <= set(rules.events_on(expected_day))
+    assert expected_names.isdisjoint(rules.events_on(displaced_day))

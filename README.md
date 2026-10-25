@@ -113,6 +113,12 @@ describe a moving occasion:
 | `11/1+4@thu+1d` | One day after the fourth Thursday on or after November 1 |
 | `Thanksgiving+1d` | One day after the rule named Thanksgiving |
 
+Complete, valid fixed-date and Easter expressions take precedence over rule
+names. For example, `7/14+1d` always means July 15, even if a rule has that
+name. These literal-shaped names are reserved when used in expressions; use a
+distinct name to reference such a rule. Names with extra text, such as
+`7/14 anniversary` or `Easter+1d event`, can still be referenced with offsets.
+
 Use `d` for days, `w` for weeks, and `m` for calendar months. Weekday names
 are `mon`, `tue`, `wed`, `thu`, `fri`, `sat`, and `sun`; they are not case
 sensitive. A weekday offset includes the starting date, so `+1@mon` returns
