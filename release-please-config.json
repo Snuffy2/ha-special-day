@@ -68,6 +68,7 @@
   "packages": {
     ".": {
       "package-name": "ha-special-day",
+      "release-as": "0.1.0",
       "skip-changelog": true,
       "extra-files": [
         {
