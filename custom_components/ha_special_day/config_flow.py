@@ -1,4 +1,4 @@
-"""Configure Special Day through the Home Assistant UI."""
+"""Configure ha-special-day through the Home Assistant UI."""
 
 from typing import Any
 
@@ -37,7 +37,7 @@ def options_schema(options: dict[str, Any]) -> probatio.Schema:
 
 
 class SpecialDayConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Set up one shared set of Special Day entities."""
+    """Set up one shared set of ha-special-day entities."""
 
     VERSION = 1
 
@@ -63,7 +63,7 @@ class SpecialDayConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "invalid_rules"
                 placeholders["error"] = str(err)
             else:
-                return self.async_create_entry(title="Special Day", data=user_input)
+                return self.async_create_entry(title="ha-special-day", data=user_input)
         return self.async_show_form(
             step_id="user",
             data_schema=options_schema(user_input or {}),

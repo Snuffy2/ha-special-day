@@ -1,4 +1,4 @@
-# Releasing Special Day
+# Releasing ha-special-day
 
 Release Please manages the release pull request, version tag, and GitHub
 Release from conventional commits merged to `main`.
@@ -6,18 +6,18 @@ Release from conventional commits merged to `main`.
 The release pull request updates all version sources together:
 
 - `.release-please-manifest.json`
-- `custom_components/special_day/const.py`
-- `custom_components/special_day/manifest.json`
+- `custom_components/ha_special_day/const.py`
+- `custom_components/ha_special_day/manifest.json`
 
 Review and merge the release pull request after its normal required checks
 pass. The next `Release Please` workflow run creates the `v`-prefixed tag and
-GitHub Release, then builds and uploads `special_day.zip` for HACS. Release Please
+GitHub Release, then builds and uploads `ha_special_day.zip` for HACS. Release Please
 does not create or maintain a changelog file in this repository.
 
 If archive creation or upload fails after the GitHub Release exists, manually
 run the `Release Please` workflow with that release's `vMAJOR.MINOR.PATCH` tag.
 The recovery run checks out the existing tag, validates its version sources,
-and rebuilds and replaces `special_day.zip` without creating another release.
+and rebuilds and replaces `ha_special_day.zip` without creating another release.
 
 The workflows use these repository secrets, matching the Places setup:
 

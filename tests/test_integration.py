@@ -13,7 +13,7 @@ from homeassistant.util import dt as dt_util
 import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry, async_fire_time_changed
 
-from custom_components.special_day.const import DOMAIN
+from custom_components.ha_special_day.const import DOMAIN
 
 
 @pytest.fixture
@@ -50,7 +50,7 @@ async def setup_entry(hass: HomeAssistant, **data: object) -> MockConfigEntry:
     Returns:
         MockConfigEntry: Loaded configuration entry.
     """
-    entry = MockConfigEntry(domain=DOMAIN, unique_id=DOMAIN, data=data, title="Special Day")
+    entry = MockConfigEntry(domain=DOMAIN, unique_id=DOMAIN, data=data, title="ha-special-day")
     entry.add_to_hass(hass)
     assert await hass.config_entries.async_setup(entry.entry_id)
     await hass.async_block_till_done()
@@ -69,17 +69,17 @@ async def test_entities_reload_and_unload(
     """
     freezer.move_to("2026-10-24T12:00:00Z")
     entry = await setup_entry(hass, rules_file=rules_file.name)
-    assert hass.states.get("binary_sensor.special_day").state == "on"
-    sensor = hass.states.get("sensor.special_day_description")
+    assert hass.states.get("binary_sensor.ha_special_day").state == "on"
+    sensor = hass.states.get("sensor.ha_special_day_description")
     assert sensor.state == "Test Day"
     assert sensor.attributes["events"] == ["Test Day"]
 
     await hass.async_add_executor_job(rules_file.write_text, '{"rules": {"Bad Date": "99/99"}}')
     with pytest.raises(HomeAssistantError, match="Bad Date"):
         await hass.services.async_call(DOMAIN, "reload_rules", {}, blocking=True)
-    assert hass.states.get("sensor.special_day_description").state == "Test Day"
+    assert hass.states.get("sensor.ha_special_day_description").state == "Test Day"
     await entry.runtime_data.async_refresh()
-    assert hass.states.get("binary_sensor.special_day").state == "on"
+    assert hass.states.get("binary_sensor.ha_special_day").state == "on"
 
     await hass.async_add_executor_job(
         rules_file.write_text,
@@ -93,14 +93,14 @@ async def test_entities_reload_and_unload(
         ),
     )
     await hass.services.async_call(DOMAIN, "reload_rules", {}, blocking=True)
-    assert hass.states.get("binary_sensor.special_day").state == "off"
-    assert hass.states.get("sensor.special_day_description").state == ""
+    assert hass.states.get("binary_sensor.ha_special_day").state == "off"
+    assert hass.states.get("sensor.ha_special_day_description").state == ""
     assert await hass.config_entries.async_unload(entry.entry_id)
     assert not hass.services.has_service(DOMAIN, "reload_rules")
-    previous = hass.states.get("sensor.special_day_description")
+    previous = hass.states.get("sensor.ha_special_day_description")
     async_fire_time_changed(hass, dt_util.utcnow().replace(day=25, hour=0, minute=0, second=0))
     await hass.async_block_till_done()
-    assert hass.states.get("sensor.special_day_description") == previous
+    assert hass.states.get("sensor.ha_special_day_description") == previous
 
 
 async def test_local_midnight(
@@ -116,11 +116,11 @@ async def test_local_midnight(
     await hass.config.async_set_time_zone("America/New_York")
     freezer.move_to("2026-10-25T03:59:50Z")
     await setup_entry(hass, rules_file=rules_file.name)
-    assert hass.states.get("binary_sensor.special_day").state == "on"
+    assert hass.states.get("binary_sensor.ha_special_day").state == "on"
     freezer.move_to("2026-10-25T04:00:01Z")
     async_fire_time_changed(hass, dt_util.utcnow())
     await hass.async_block_till_done()
-    assert hass.states.get("binary_sensor.special_day").state == "off"
+    assert hass.states.get("binary_sensor.ha_special_day").state == "off"
 
 
 async def test_calendar_merge(
@@ -168,7 +168,7 @@ async def test_calendar_merge(
         rules_file=rules_file.name,
         calendars=["calendar.family", "calendar.broken"],
     )
-    attrs = hass.states.get("sensor.special_day_description").attributes
+    attrs = hass.states.get("sensor.ha_special_day_description").attributes
     assert attrs["events"] == ["Birthday", "Trip", "Test Day"]
     assert attrs["calendar_errors"] == ["calendar.broken"]
     assert dt_util.parse_datetime(calls[0]["start_date_time"]).hour == 0
@@ -224,7 +224,7 @@ async def test_invalid_initial_file(hass: HomeAssistant) -> None:
     assert not await hass.config_entries.async_setup(entry.entry_id)
     assert entry.state == ConfigEntryState.SETUP_ERROR
     assert not hass.services.has_service(DOMAIN, "reload_rules")
-    assert hass.states.get("binary_sensor.special_day") is None
+    assert hass.states.get("binary_sensor.ha_special_day") is None
 
 
 async def test_calendar_recovery_and_full_description(
@@ -251,7 +251,7 @@ async def test_calendar_recovery_and_full_description(
         "calendar", "get_events", get_events, supports_response=SupportsResponse.ONLY
     )
     entry = await setup_entry(hass, rules_file=rules_file.name, calendars=["calendar.family"])
-    state = hass.states.get("sensor.special_day_description")
+    state = hass.states.get("sensor.ha_special_day_description")
     assert "Lent" in state.state
     assert state.attributes["calendar_errors"] == ["calendar.family"]
 
@@ -261,7 +261,7 @@ async def test_calendar_recovery_and_full_description(
         }
     }
     await entry.runtime_data.async_refresh()
-    state = hass.states.get("sensor.special_day_description")
+    state = hass.states.get("sensor.ha_special_day_description")
     assert state.state == calendar_name[:255]
     assert state.attributes["description"] == calendar_name
     assert state.attributes["events"] == [calendar_name]

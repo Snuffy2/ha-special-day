@@ -1,4 +1,4 @@
-# Special Day
+# ha-special-day
 
 A small Home Assistant custom integration that calculates today's occasions and
 creates its own entities. Personal holiday rules live in a separate JSON file so
@@ -13,10 +13,10 @@ that this integration builds on.
 
 Requires Home Assistant **2026.10 or newer** (Python 3.14.2 or newer).
 
-1. Copy `custom_components/special_day` into your Home Assistant
+1. Copy `custom_components/ha_special_day` into your Home Assistant
    `/config/custom_components/` folder.
 2. Restart Home Assistant to discover the integration.
-3. Open **Settings → Devices & services → Add integration → Special Day**.
+3. Open **Settings → Devices & services → Add integration → ha-special-day**.
 4. Leave the rules file blank for the bundled defaults, or enter the path of an
    existing personal JSON file relative to `/config`. Optionally select calendars.
 
@@ -24,8 +24,8 @@ The integration supports one configuration and creates:
 
 | Entity | Purpose |
 | --- | --- |
-| `binary_sensor.special_day` | On when at least one occasion applies today |
-| `sensor.special_day_description` | Text suitable for “today is …” |
+| `binary_sensor.ha_special_day` | On when at least one occasion applies today |
+| `sensor.ha_special_day_description` | Text suitable for “today is …” |
 
 Entity IDs can differ if those names are already taken. Both entities expose
 `events` (the complete list), `description` (the full text), `last_checked`
@@ -38,7 +38,7 @@ reloaded. No helpers or daily script automation are required.
 
 ## Personal rules
 
-Create `/config/special_day_rules.json`, for example:
+Create `/config/ha_special_day_rules.json`, for example:
 
 ```json
 {
@@ -55,9 +55,9 @@ Create `/config/special_day_rules.json`, for example:
 }
 ```
 
-Choose `special_day_rules.json` during setup or through the integration's
+Choose `ha_special_day_rules.json` during setup or through the integration's
 **Configure** screen. Files must be inside the Home Assistant config folder;
-keep them outside `custom_components/special_day` so updates preserve them.
+keep them outside `custom_components/ha_special_day` so updates preserve them.
 
 `rules` adds occasions or replaces a bundled expression by exact name.
 `exclude` hides names, including calculated bank holidays or seasonal fallback
@@ -68,8 +68,8 @@ fallback descriptions; set both to `false` for a wholly personal calendar.
 All three switches default to `true`, and `rules` and `exclude` default to empty.
 Unknown settings and malformed entries are rejected.
 
-After editing the file, run **Developer tools → Actions → Special Day: Reload
-rules** (`special_day.reload_rules`). It validates the whole file, recalculates
+After editing the file, run **Developer tools → Actions → ha-special-day: Reload
+rules** (`ha_special_day.reload_rules`). It validates the whole file, recalculates
 today, and updates both entities. An invalid file produces an error identifying
 the problem and leaves the previous working rules and state intact. Automatic
 refresh continues using those working rules. The file must be corrected before
@@ -124,7 +124,7 @@ the next refresh. Calendar events are not cached through failures.
 
 Keep announcements and lighting in separate automations. For example, create a
 UI automation with a daily **Time** trigger at 08:00, a **State** condition that
-`binary_sensor.special_day` is `on`, and your announcement action using the
+`binary_sensor.ha_special_day` is `on`, and your announcement action using the
 sensor's `description` attribute. Status is already current at midnight; checking
 it never announces anything. If you need only one announcement per day across
 multiple triggers, manage that in the announcement automation with a date helper.

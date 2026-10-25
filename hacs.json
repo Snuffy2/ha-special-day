@@ -1,6 +1,6 @@
 {
-  "name": "Special Day",
+  "name": "ha-special-day",
   "homeassistant": "2026.10.0",
   "zip_release": true,
-  "filename": "special_day.zip"
+  "filename": "ha_special_day.zip"
 }

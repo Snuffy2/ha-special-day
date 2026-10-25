@@ -67,16 +67,16 @@
   ],
   "packages": {
     ".": {
-      "package-name": "special-day",
+      "package-name": "ha-special-day",
       "skip-changelog": true,
       "extra-files": [
         {
           "type": "generic",
-          "path": "custom_components/special_day/const.py"
+          "path": "custom_components/ha_special_day/const.py"
         },
         {
           "type": "json",
-          "path": "custom_components/special_day/manifest.json",
+          "path": "custom_components/ha_special_day/manifest.json",
           "jsonpath": "$.version"
         }
       ]

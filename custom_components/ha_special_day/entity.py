@@ -1,4 +1,4 @@
-"""Shared Special Day entity attributes."""
+"""Shared ha-special-day entity attributes."""
 
 from typing import Any
 
@@ -16,7 +16,7 @@ class SpecialDayEntity(CoordinatorEntity[SpecialDayCoordinator]):
     _attr_icon = "mdi:calendar-star"
 
     def __init__(self, coordinator: SpecialDayCoordinator, entry_id: str, key: str) -> None:
-        """Associate an entity with the singleton Special Day device.
+        """Associate an entity with the singleton ha-special-day device.
 
         Args:
             coordinator (SpecialDayCoordinator): Coordinator supplying the occasion snapshot.
@@ -25,7 +25,7 @@ class SpecialDayEntity(CoordinatorEntity[SpecialDayCoordinator]):
         """
         super().__init__(coordinator)
         self._attr_unique_id = f"{entry_id}_{key}"
-        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, entry_id)}, name="Special Day")
+        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, entry_id)}, name="ha-special-day")
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:

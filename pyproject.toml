@@ -1,13 +1,13 @@
 [project]
-name = "special-day"
+name = "ha-special-day"
 dynamic = ["version"]
-description = "Special Day Home Assistant integration"
+description = "ha-special-day Home Assistant integration"
 readme = "README.md"
 requires-python = ">=3.14.2"
 dependencies = []
 
 [tool.setuptools.dynamic]
-version = {attr = "custom_components.special_day.const.VERSION"}
+version = {attr = "custom_components.ha_special_day.const.VERSION"}
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -63,7 +63,7 @@ addopts = """
   --timeout=20
   --durations=10
   -o console_output_style=progress
-  --cov=custom_components.special_day
+  --cov=custom_components.ha_special_day
   --cov-report=term-missing
   --cov-report=html
 """
@@ -72,7 +72,7 @@ asyncio_mode = "auto"
 
 [tool.coverage.run]
 branch = true
-source = ["custom_components.special_day"]
+source = ["custom_components.ha_special_day"]
 relative_files = true
 parallel = false
 

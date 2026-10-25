@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from custom_components.special_day.rules import RuleError, Rules, load_rules
+from custom_components.ha_special_day.rules import RuleError, Rules, load_rules
 
 
 def _load(tmp_path: Path, config: dict[str, object]) -> Rules:

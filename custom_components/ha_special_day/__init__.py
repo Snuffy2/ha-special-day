@@ -34,7 +34,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: SpecialDayConfigEntry) -
     try:
         await coordinator.async_load_rules()
     except (RuleError, OSError, ValueError) as err:
-        raise ConfigEntryError(f"Cannot load Special Day rules: {err}") from err
+        raise ConfigEntryError(f"Cannot load ha-special-day rules: {err}") from err
     entry.runtime_data = coordinator
     await coordinator.async_config_entry_first_refresh()
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

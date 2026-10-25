@@ -1,1 +1,1 @@
-"""Tests for the Special Day integration."""
+"""Tests for the ha-special-day integration."""

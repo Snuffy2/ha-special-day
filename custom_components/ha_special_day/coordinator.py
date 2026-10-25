@@ -93,7 +93,7 @@ class SpecialDayCoordinator(DataUpdateCoordinator[SpecialDayData]):
         super().__init__(
             hass,
             _LOGGER,
-            name="Special Day",
+            name="ha-special-day",
             config_entry=entry,
             update_interval=timedelta(minutes=15),
         )
@@ -119,7 +119,7 @@ class SpecialDayCoordinator(DataUpdateCoordinator[SpecialDayData]):
                 )
                 data = await self._calculate(candidate)
             except (RuleError, OSError, ValueError) as err:
-                raise HomeAssistantError(f"Cannot reload Special Day rules: {err}") from err
+                raise HomeAssistantError(f"Cannot reload ha-special-day rules: {err}") from err
             self.rules = candidate
             self.async_set_updated_data(data)
 
@@ -134,7 +134,7 @@ class SpecialDayCoordinator(DataUpdateCoordinator[SpecialDayData]):
         """
         async with self._rules_lock:
             if self.rules is None:
-                raise UpdateFailed("Initial Special Day rules have not been loaded")
+                raise UpdateFailed("Initial ha-special-day rules have not been loaded")
             return await self._calculate(self.rules)
 
     async def _calculate(self, rules: Rules) -> SpecialDayData:
@@ -168,7 +168,7 @@ class SpecialDayCoordinator(DataUpdateCoordinator[SpecialDayData]):
                     )
                 events.extend(calendar_events(response, entity_id, day))
             except (HomeAssistantError, TimeoutError) as err:
-                _LOGGER.warning("Cannot read Special Day calendar %s: %s", entity_id, err)
+                _LOGGER.warning("Cannot read ha-special-day calendar %s: %s", entity_id, err)
                 errors.append(entity_id)
         events.extend(rules.events_on(day, include_fallback=not events))
         return SpecialDayData(list(dict.fromkeys(events)), now, errors)
