@@ -4,8 +4,9 @@ from datetime import datetime
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
-from homeassistant.core import HomeAssistant, ServiceCall
+from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
 from homeassistant.exceptions import ConfigEntryError
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_time_change
 import voluptuous as vol
 
@@ -37,6 +38,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: SpecialDayConfigEntry) -
         raise ConfigEntryError(f"Cannot load ha-special-day rules: {err}") from err
     entry.runtime_data = coordinator
     await coordinator.async_config_entry_first_refresh()
+    registry = er.async_get(hass)
+    old_entity = registry.async_get_entity_id("sensor", DOMAIN, f"{entry.entry_id}_description")
+    if old_entity is not None:
+        registry.async_remove(old_entity)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     async def refresh_at_midnight(now: datetime) -> None:
@@ -55,6 +60,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: SpecialDayConfigEntry) -
         """
         await coordinator.async_reload_rules()
 
+    async def get_holiday(call: ServiceCall) -> ServiceResponse:
+        """Return the next occurrence matching a case-insensitive holiday name.
+
+        Args:
+            call (ServiceCall): Holiday name supplied by the caller.
+
+        Returns:
+            ServiceResponse: JSON-compatible holiday details.
+        """
+        return await coordinator.async_get_holiday(call.data["name"])
+
     entry.async_on_unload(
         async_track_time_change(hass, refresh_at_midnight, hour=0, minute=0, second=0)
     )
@@ -65,6 +81,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: SpecialDayConfigEntry) -
         "reload_rules",
         reload_rules,
         schema=vol.Schema({}),  # type: ignore[arg-type]
+    )
+    hass.services.async_register(
+        DOMAIN,
+        "get_holiday",
+        get_holiday,
+        schema=vol.Schema({vol.Required("name"): vol.All(str, vol.Length(min=1))}),  # type: ignore[arg-type]
+        supports_response=SupportsResponse.ONLY,
     )
     return True
 
@@ -92,4 +115,5 @@ async def async_unload_entry(hass: HomeAssistant, entry: SpecialDayConfigEntry) 
     if not await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
         return False
     hass.services.async_remove(DOMAIN, "reload_rules")
+    hass.services.async_remove(DOMAIN, "get_holiday")
     return True

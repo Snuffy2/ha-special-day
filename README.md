@@ -1,7 +1,7 @@
 # Special Day
 
 Special Day adds two Home Assistant entities that show whether an occasion
-applies today and what it is. It combines its built-in dates with your own
+applies today and how many days remain until the next holiday. It combines its built-in dates with your own
 dates and, optionally, all-day events from selected calendars. You can use the
 entities in a dashboard or in your own automations.
 
@@ -36,22 +36,64 @@ The integration supports one configuration and creates two entities:
 | Entity | What it shows |
 | --- | --- |
 | `binary_sensor.special_day` | `on` when one or more occasions apply today; otherwise `off` |
-| `sensor.special_day_description` | A readable list of today's occasions |
+| `sensor.special_day_next_holiday` | Days until the next holiday strictly after today |
 
 Home Assistant may choose different entity IDs if these names are already in
-use. Existing installations retain their registered entity IDs after an update.
-Both entities have these attributes:
+use. The binary sensor has these attributes:
 
-- `events`: the full list of occasion names.
-- `description`: the full text, even if it is longer than 255 characters.
+- `events`: the full list of today's occasion names.
+- `description`: today's complete readable text.
 - `last_checked`: when the integration last checked the date and calendars.
-- `calendar_errors`: calendar entity IDs that could not be read on the latest
-  check.
+- `calendar_errors`: calendar entity IDs that could not be read on the latest check.
 
-The sensor's displayed state is limited to 255 characters, but the full text
-remains in its `description` attribute. The integration checks at setup, local
-midnight, and every 15 minutes. You do not need a helper or a daily automation
-just to keep the entities current.
+The next-holiday sensor always skips today: its state is a positive number of
+days, or `unknown` if no future holiday is known. Its attributes include `name`,
+`date` (the actual ISO date, `YYYY-MM-DD`), `days_until`, `weekday`, and `source`
+(`rule` or `calendar`). Calendar holidays also include `calendar_entity_id` and
+`end_date` (exclusive). The `holidays` list contains details for every holiday
+on the next date; the first, ordered by name, supplies the top-level details.
+It also has `last_checked` and `calendar_errors` attributes.
+
+Both the countdown and holiday lookup use named rules and selected all-day
+calendar events. Annual rules are searched up to eight years ahead, including
+leap-day gaps across a non-leap century. Calendars are searched through the next
+366 days. Daily Lent and Advent fallback labels only appear on the binary
+sensor. An ongoing calendar event still applies to today's binary sensor, but
+its start date is past and it does not count as a future holiday.
+
+The integration checks at setup, local midnight, and every 15 minutes. You do
+not need a helper or a daily automation to keep the entities current.
+
+The former description sensor is removed automatically on upgrade. Update any
+automations or dashboard cards that used it to read the binary sensor's
+`description` attribute instead.
+
+### Look up a holiday
+
+Run **Developer tools → Actions → ha-special-day: Get holiday** (action ID
+`ha_special_day.get_holiday`) with the `name` field set to a full holiday name.
+Matching ignores case and surrounding whitespace. For example, `christmas day`
+matches `Christmas Day`. The action refreshes dates and returns JSON response
+data such as:
+
+```json
+{
+  "name": "Christmas Day",
+  "date": "2026-12-25",
+  "days_until": 62,
+  "weekday": "Friday",
+  "source": "rule"
+}
+```
+
+Unlike the countdown sensor, lookup includes today: requesting today's holiday
+returns `days_until: 0`. A date that has passed returns the next occurrence.
+Calendar results also include `calendar_entity_id` and the exclusive `end_date`.
+If names match more than one occasion, the earliest occurrence wins. A name
+without a known upcoming occurrence raises an error; unavailable calendars may
+prevent a calendar-only name from being found. To use the result in an
+automation, set `response_variable` on the action; REST callers must append
+`?return_response` to the service URL.
 
 ## Add your own dates
 
@@ -169,8 +211,8 @@ read does not keep events from its previous successful check.
 
 For example, you can make a Home Assistant automation that runs at 08:00,
 checks that `binary_sensor.special_day` is `on`, and uses the
-`description` attribute of `sensor.special_day_description` in an
-announcement. The sensor is already current at midnight; it does not announce
+`description` attribute of `binary_sensor.special_day` in an
+announcement. The binary sensor is already current at midnight; it does not announce
 anything by itself. If an automation has several triggers, use a date helper
 in that automation if you want to limit it to one announcement per day.
 

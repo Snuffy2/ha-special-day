@@ -358,3 +358,170 @@ def test_complete_literals_take_precedence_over_rule_names(
 
     assert expected_names <= set(rules.events_on(expected_day))
     assert expected_names.isdisjoint(rules.events_on(displaced_day))
+
+
+def test_next_occurrences_includes_today_and_sorts_same_day_names(tmp_path: Path) -> None:
+    """Return same-day and later events, ordered by date then name.
+
+    Args:
+        tmp_path (Path): Temporary directory for personal rules.
+    """
+    rules = _load(
+        tmp_path,
+        {
+            "include_defaults": False,
+            "bank_holidays": False,
+            "seasonal_fallbacks": True,
+            "rules": {"Zulu": "7/14", "Alpha": "7/14", "Tomorrow": "7/15"},
+        },
+    )
+
+    assert rules.next_occurrences(date(2024, 7, 14)) == [
+        ("Alpha", date(2024, 7, 14)),
+        ("Zulu", date(2024, 7, 14)),
+        ("Tomorrow", date(2024, 7, 15)),
+    ]
+
+
+def test_next_occurrences_follow_easter_weekday_and_reference_offsets(
+    tmp_path: Path,
+) -> None:
+    """Resolve moving dates and referenced rules across the year boundary.
+
+    Args:
+        tmp_path (Path): Temporary directory for personal rules.
+    """
+    rules = _load(
+        tmp_path,
+        {
+            "include_defaults": False,
+            "bank_holidays": False,
+            "seasonal_fallbacks": False,
+            "rules": {
+                "Easter Monday": "Easter+1d",
+                "First Monday": "1/1+1@Mon",
+                "Base": "7/14",
+                "Referenced": "Base+2d",
+            },
+        },
+    )
+
+    assert rules.next_occurrences(date(2024, 7, 15)) == [
+        ("Referenced", date(2024, 7, 16)),
+        ("First Monday", date(2025, 1, 6)),
+        ("Easter Monday", date(2025, 4, 21)),
+        ("Base", date(2025, 7, 14)),
+    ]
+
+
+def test_next_occurrences_finds_leap_day_across_2100(tmp_path: Path) -> None:
+    """Search far enough to find the next leap day after the century gap.
+
+    Args:
+        tmp_path (Path): Temporary directory for personal rules.
+    """
+    rules = _load(
+        tmp_path,
+        {
+            "include_defaults": False,
+            "bank_holidays": False,
+            "seasonal_fallbacks": False,
+            "rules": {"Leap Day": "2/29"},
+        },
+    )
+
+    assert rules.next_occurrences(date(2096, 3, 1)) == [
+        ("Leap Day", date(2104, 2, 29)),
+    ]
+
+
+def test_next_occurrences_respect_exclusions_and_omit_fallbacks(tmp_path: Path) -> None:
+    """Exclude configured names and never return seasonal fallback labels.
+
+    Args:
+        tmp_path (Path): Temporary directory for personal rules.
+    """
+    rules = _load(
+        tmp_path,
+        {
+            "include_defaults": False,
+            "bank_holidays": False,
+            "seasonal_fallbacks": True,
+            "exclude": ["Hidden"],
+            "rules": {"Hidden": "3/7", "Visible": "3/8"},
+        },
+    )
+    empty = _load(
+        tmp_path,
+        {
+            "include_defaults": False,
+            "bank_holidays": False,
+            "seasonal_fallbacks": True,
+            "exclude": ["the 20th day of Lent"],
+        },
+    )
+
+    assert rules.next_occurrences(date(2024, 3, 7)) == [
+        ("Visible", date(2024, 3, 8)),
+    ]
+    assert empty.next_occurrences(date(2024, 3, 7)) == []
+
+
+def test_next_occurrences_include_substitute_bank_holidays_and_exclusions(
+    tmp_path: Path,
+) -> None:
+    """Find the earliest date for each bank holiday label.
+
+    Args:
+        tmp_path (Path): Temporary directory for personal rules.
+    """
+    rules = _load(
+        tmp_path,
+        {
+            "include_defaults": False,
+            "seasonal_fallbacks": False,
+            "exclude": ["Christmas Day Bank Holiday", "New Year's Day Bank Holiday"],
+        },
+    )
+
+    assert rules.next_occurrences(date(2021, 12, 27)) == [
+        ("Boxing Day Bank Holiday", date(2021, 12, 28)),
+    ]
+
+
+def test_next_occurrences_support_large_offsets_and_date_boundaries(
+    tmp_path: Path,
+) -> None:
+    """Use prior anchor years for large offsets and clip date boundaries.
+
+    Args:
+        tmp_path (Path): Temporary directory for personal rules.
+    """
+    far = _load(
+        tmp_path,
+        {
+            "include_defaults": False,
+            "bank_holidays": False,
+            "seasonal_fallbacks": False,
+            "rules": {"Far Offset": "1/1+3000d", "Future Anchor": "1/1-3000d"},
+        },
+    )
+    boundary = _load(
+        tmp_path,
+        {
+            "include_defaults": False,
+            "bank_holidays": False,
+            "seasonal_fallbacks": False,
+            "rules": {"Next Year": "12/31+1d", "Final Day": "12/31"},
+        },
+    )
+
+    assert far.next_occurrences(date(2026, 1, 1)) == [
+        ("Far Offset", date(2026, 3, 20)),
+        ("Future Anchor", date(2026, 10, 15)),
+    ]
+    assert boundary.next_occurrences(date.min) == [
+        ("Final Day", date(1, 12, 31)),
+        ("Next Year", date(2, 1, 1)),
+    ]
+    assert boundary.next_occurrences(date.max) == [("Final Day", date.max)]

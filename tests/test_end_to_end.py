@@ -95,26 +95,33 @@ async def test_personal_rules_user_journey(
     entry_id = await create_integration(user_client, DOMAIN, {"rules_file": path.name})
     await hass.async_block_till_done()
 
-    response = await user_client.get("/api/states/sensor.special_day_description")
-    sensor = await response.json()
-    assert sensor["state"] == "Our anniversary"
-    assert sensor["attributes"]["events"] == ["Our anniversary"]
     response = await user_client.get("/api/states/binary_sensor.special_day")
-    assert (await response.json())["state"] == "on"
+    sensor = await response.json()
+    assert sensor["state"] == "on"
+    assert sensor["attributes"]["events"] == ["Our anniversary"]
+    assert sensor["attributes"]["description"] == "Our anniversary"
+    response = await user_client.get("/api/states/sensor.special_day_next_holiday")
+    next_holiday = await response.json()
+    assert next_holiday["state"] == "365"
+    assert next_holiday["attributes"]["name"] == "Our anniversary"
+    assert next_holiday["attributes"]["date"] == "2027-10-24"
 
     await hass.async_add_executor_job(path.write_text, '{"rules": {"Bad Date": "99/99"}}')
     response = await user_client.post("/api/services/ha_special_day/reload_rules", json={})
     assert response.status == 500
-    response = await user_client.get("/api/states/sensor.special_day_description")
-    assert (await response.json())["state"] == "Our anniversary"
+    response = await user_client.get("/api/states/binary_sensor.special_day")
+    sensor = await response.json()
+    assert sensor["state"] == "on"
+    assert sensor["attributes"]["description"] == "Our anniversary"
 
     # A rejected file must not replace the rules used by automatic refreshes.
     freezer.move_to("2026-10-24T12:15:01Z")
     async_fire_time_changed(hass, dt_util.utcnow())
     await hass.async_block_till_done()
-    response = await user_client.get("/api/states/sensor.special_day_description")
+    response = await user_client.get("/api/states/binary_sensor.special_day")
     sensor = await response.json()
-    assert sensor["state"] == "Our anniversary"
+    assert sensor["state"] == "on"
+    assert sensor["attributes"]["description"] == "Our anniversary"
     assert dt_util.parse_datetime(sensor["attributes"]["last_checked"]) >= dt_util.parse_datetime(
         "2026-10-24T12:15:00Z"
     )
@@ -123,8 +130,14 @@ async def test_personal_rules_user_journey(
     await hass.async_add_executor_job(path.write_text, json.dumps(settings))
     response = await user_client.post("/api/services/ha_special_day/reload_rules", json={})
     assert response.status == 200
-    response = await user_client.get("/api/states/sensor.special_day_description")
-    assert (await response.json())["state"] == "Family celebration"
+    response = await user_client.get("/api/states/binary_sensor.special_day")
+    sensor = await response.json()
+    assert sensor["state"] == "on"
+    assert sensor["attributes"]["description"] == "Family celebration"
+    response = await user_client.get("/api/states/sensor.special_day_next_holiday")
+    next_holiday = await response.json()
+    assert next_holiday["state"] == "365"
+    assert next_holiday["attributes"]["name"] == "Family celebration"
 
     # Choosing a different file from Configure must actually reload the entities.
     other_path = Path(hass.config.path("other.json"))
@@ -142,16 +155,20 @@ async def test_personal_rules_user_journey(
     assert (await response.json())["type"] == "create_entry"
     await hass.async_block_till_done()
     response = await user_client.get("/api/states/binary_sensor.special_day")
-    assert (await response.json())["state"] == "off"
-    response = await user_client.get("/api/states/sensor.special_day_description")
     sensor = await response.json()
-    assert sensor["state"] == ""
+    assert sensor["state"] == "off"
     assert sensor["attributes"]["events"] == []
+    assert sensor["attributes"]["description"] == ""
+    response = await user_client.get("/api/states/sensor.special_day_next_holiday")
+    next_holiday = await response.json()
+    assert next_holiday["state"] == "1"
+    assert next_holiday["attributes"]["name"] == "Tomorrow"
+    assert next_holiday["attributes"]["date"] == "2026-10-25"
 
     response = await user_client.delete(f"/api/config/config_entries/entry/{entry_id}")
     assert response.status == 200
     await hass.async_block_till_done()
-    for entity_id in ("binary_sensor.special_day", "sensor.special_day_description"):
+    for entity_id in ("binary_sensor.special_day", "sensor.special_day_next_holiday"):
         response = await user_client.get(f"/api/states/{entity_id}")
         assert response.status == 404
     assert not hass.services.has_service("ha_special_day", "reload_rules")
@@ -189,6 +206,7 @@ async def test_local_calendar_user_journey(
 
     for event in (
         {"summary": "Family trip", "start_date": "2026-10-23", "end_date": "2026-10-25"},
+        {"summary": "Future trip", "start_date": "2026-10-27", "end_date": "2026-10-28"},
         {
             "summary": "Appointment",
             "start_date_time": "2026-10-24T23:00:00-04:00",
@@ -204,11 +222,35 @@ async def test_local_calendar_user_journey(
     freezer.move_to("2026-10-25T03:55:01Z")
     async_fire_time_changed(hass, dt_util.utcnow())
     await hass.async_block_till_done()
-    response = await user_client.get("/api/states/sensor.special_day_description")
+    response = await user_client.get("/api/states/binary_sensor.special_day")
     sensor = await response.json()
-    assert sensor["state"] == "Family trip"
+    assert sensor["state"] == "on"
     assert sensor["attributes"]["events"] == ["Family trip"]
+    assert sensor["attributes"]["description"] == "Family trip"
     assert sensor["attributes"]["calendar_errors"] == []
+    response = await user_client.get("/api/states/sensor.special_day_next_holiday")
+    next_holiday = await response.json()
+    assert next_holiday["state"] == "3"
+    assert next_holiday["attributes"]["name"] == "Future trip"
+    assert next_holiday["attributes"]["date"] == "2026-10-27"
+    assert next_holiday["attributes"]["source"] == "calendar"
+    assert next_holiday["attributes"]["calendar_entity_id"] == "calendar.family"
+
+    response = await user_client.post(
+        "/api/services/ha_special_day/get_holiday?return_response",
+        json={"name": "  FUTURE TRIP  "},
+    )
+    assert response.status == 200, await response.text()
+    action_response = await response.json()
+    assert action_response["service_response"] == {
+        "name": "Future trip",
+        "date": "2026-10-27",
+        "days_until": 3,
+        "weekday": "Tuesday",
+        "source": "calendar",
+        "end_date": "2026-10-28",
+        "calendar_entity_id": "calendar.family",
+    }
     response = await user_client.get("/api/states/binary_sensor.special_day")
     assert (await response.json())["state"] == "on"
 
@@ -216,9 +258,12 @@ async def test_local_calendar_user_journey(
     async_fire_time_changed(hass, dt_util.utcnow())
     await hass.async_block_till_done()
     response = await user_client.get("/api/states/binary_sensor.special_day")
-    assert (await response.json())["state"] == "off"
-    response = await user_client.get("/api/states/sensor.special_day_description")
     sensor = await response.json()
-    assert sensor["state"] == ""
+    assert sensor["state"] == "off"
     assert sensor["attributes"]["events"] == []
+    assert sensor["attributes"]["description"] == ""
     assert sensor["attributes"]["calendar_errors"] == []
+    response = await user_client.get("/api/states/sensor.special_day_next_holiday")
+    next_holiday = await response.json()
+    assert next_holiday["state"] == "2"
+    assert next_holiday["attributes"]["date"] == "2026-10-27"
