@@ -1,6 +1,6 @@
-# ha-special-day
+# Special Day
 
-ha-special-day adds two Home Assistant entities that show whether an occasion
+Special Day adds two Home Assistant entities that show whether an occasion
 applies today and what it is. It combines its built-in dates with your own
 dates and, optionally, all-day events from selected calendars. You can use the
 entities in a dashboard or in your own automations.
@@ -19,7 +19,7 @@ Community Store). HACS must already be installed and set up in Home Assistant.
 6. Open its page, select **Download**, and confirm the download in the dialog.
 7. Restart Home Assistant.
 8. Go to **Settings → Devices & services → Add integration** and search for
-   **ha-special-day** to complete setup.
+   **Special Day** to complete setup.
 
 For screenshots of the custom repository steps, see the
 [HACS custom repository guide](https://www.hacs.xyz/docs/faq/custom_repositories/).
@@ -35,11 +35,12 @@ The integration supports one configuration and creates two entities:
 
 | Entity | What it shows |
 | --- | --- |
-| `binary_sensor.ha_special_day` | `on` when one or more occasions apply today; otherwise `off` |
-| `sensor.ha_special_day_description` | A readable list of today's occasions |
+| `binary_sensor.special_day` | `on` when one or more occasions apply today; otherwise `off` |
+| `sensor.special_day_description` | A readable list of today's occasions |
 
 Home Assistant may choose different entity IDs if these names are already in
-use. Both entities have these attributes:
+use. Existing installations retain their registered entity IDs after an update.
+Both entities have these attributes:
 
 - `events`: the full list of occasion names.
 - `description`: the full text, even if it is longer than 255 characters.
@@ -167,8 +168,8 @@ refresh. Calendar events are not cached between checks, so a failed calendar
 read does not keep events from its previous successful check.
 
 For example, you can make a Home Assistant automation that runs at 08:00,
-checks that `binary_sensor.ha_special_day` is `on`, and uses the
-`description` attribute of `sensor.ha_special_day_description` in an
+checks that `binary_sensor.special_day` is `on`, and uses the
+`description` attribute of `sensor.special_day_description` in an
 announcement. The sensor is already current at midnight; it does not announce
 anything by itself. If an automation has several triggers, use a date helper
 in that automation if you want to limit it to one announcement per day.
