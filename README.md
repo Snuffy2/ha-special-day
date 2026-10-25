@@ -10,9 +10,9 @@
 | custom\_components/ha\_special\_day/const.py          |        5 |        0 |        0 |        0 |    100% |           |
 | custom\_components/ha\_special\_day/coordinator.py    |       89 |        6 |       22 |        6 |     89% |53, 137, 192, 195, 199, 202 |
 | custom\_components/ha\_special\_day/entity.py         |       16 |        0 |        0 |        0 |    100% |           |
-| custom\_components/ha\_special\_day/rules.py          |      286 |       31 |      124 |       20 |     87% |90, 128, 134, 152, 158, 160, 206-207, 221, 223, 225, 277, 279, 287, 292, 294, 296, 298, 358-359, 365, 377-378, 404-406, 439-449 |
+| custom\_components/ha\_special\_day/rules.py          |      289 |       24 |      126 |       17 |     90% |128, 134, 152, 158, 160, 206-207, 221, 223, 225, 281, 289, 294, 296, 298, 300, 360-361, 367, 379-380, 406-408 |
 | custom\_components/ha\_special\_day/sensor.py         |       12 |        0 |        0 |        0 |    100% |           |
-| **TOTAL**                                             |  **499** |   **38** |  **152** |   **27** | **89%** |           |
+| **TOTAL**                                             |  **502** |   **31** |  **154** |   **24** | **92%** |           |
 
 
 ## Setup coverage badge
