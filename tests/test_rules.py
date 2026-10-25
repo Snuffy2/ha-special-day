@@ -36,6 +36,65 @@ def test_defaults_calculate_easter_and_correct_black_friday() -> None:
     assert "Black Friday" not in rules.events_on(date(2024, 11, 22))
 
 
+@pytest.mark.parametrize(
+    ("year", "expected"),
+    [
+        pytest.param(
+            2020,
+            {26: {"Boxing Day"}, 27: set(), 28: {"Boxing Day Bank Holiday"}},
+            id="friday-christmas",
+        ),
+        pytest.param(
+            2021,
+            {
+                26: {"Boxing Day"},
+                27: {"Christmas Day Bank Holiday"},
+                28: {"Boxing Day Bank Holiday"},
+            },
+            id="saturday-christmas",
+        ),
+        pytest.param(
+            2022,
+            {26: {"Boxing Day"}, 27: {"Christmas Day Bank Holiday"}, 28: set()},
+            id="sunday-christmas-2022",
+        ),
+        pytest.param(
+            2033,
+            {26: {"Boxing Day"}, 27: {"Christmas Day Bank Holiday"}, 28: set()},
+            id="sunday-christmas-2033",
+        ),
+    ],
+)
+def test_christmas_bank_holidays_follow_substitute_days(
+    year: int, expected: dict[int, set[str]]
+) -> None:
+    """Keep the named Christmas holidays on their correct substitute dates.
+
+    Args:
+        year (int): Calendar year being checked.
+        expected (dict[int, set[str]]): Expected holidays by December day.
+    """
+    rules = load_rules()
+    holiday_names = {"Boxing Day", "Christmas Day Bank Holiday", "Boxing Day Bank Holiday"}
+
+    for day_of_month, expected_names in expected.items():
+        actual_names = set(rules.events_on(date(year, 12, day_of_month))) & holiday_names
+        assert actual_names == expected_names
+
+
+def test_sunday_christmas_substitute_can_be_excluded(tmp_path: Path) -> None:
+    """Allow the corrected Christmas substitute holiday to be excluded.
+
+    Args:
+        tmp_path (Path): Temporary directory for the JSON configuration.
+    """
+    rules = _load(tmp_path, {"exclude": ["Christmas Day Bank Holiday"]})
+
+    assert "Boxing Day" in rules.events_on(date(2022, 12, 26))
+    assert "Christmas Day Bank Holiday" not in rules.events_on(date(2022, 12, 27))
+    assert "Boxing Day Bank Holiday" not in rules.events_on(date(2022, 12, 27))
+
+
 def test_inclusive_and_legacy_week_weekday_offsets(tmp_path: Path) -> None:
     """Check inclusive nth weekday and legacy week-based weekday offsets.
 
@@ -134,16 +193,21 @@ def test_lent_and_advent_fallbacks_can_be_disabled_or_excluded(tmp_path: Path) -
 @pytest.mark.parametrize(
     ("rules", "message"),
     [
-        pytest.param({"bad": "2/31"}, "bad", id="invalid-day"),
+        pytest.param({"bad": "2/31"}, "bad.*invalid fixed date", id="invalid-day"),
         pytest.param({"bad": "25/12"}, "bad", id="reversed-month-day"),
         pytest.param({"bad": "Missing Rule+1d"}, "bad", id="unknown-reference"),
-        pytest.param({"bad": "1/1+1q"}, "bad", id="invalid-offset-unit"),
+        pytest.param({"bad": "1/1+1q"}, "bad.*invalid suffix", id="invalid-offset-unit"),
         pytest.param({"bad": "1/1+" + "9" * 200 + "d"}, "bad", id="oversized-offset"),
         pytest.param({"bad": "1/1+2000d+2000d"}, "bad", id="cumulative-offset"),
         pytest.param(
             {"base": "1/1+2000d", "bad": "base+2000d"}, "bad", id="reference-chain-offset"
         ),
         pytest.param({"first": "second+1d", "second": "first-1w"}, "cycl", id="cyclic-reference"),
+        pytest.param(
+            {"7/14 anniversary": "Easter+1d event", "Easter+1d event": "7/14 anniversary+1d"},
+            "cycl",
+            id="literal-prefixed-names-real-cycle",
+        ),
     ],
 )
 def test_invalid_rules_raise_entry_specific_errors(
@@ -192,3 +256,105 @@ def test_custom_dates_use_month_day(tmp_path: Path) -> None:
     )
     assert rules.events_on(date(2024, 7, 4)) == ["Custom Day"]
     assert rules.events_on(date(2024, 4, 7)) == []
+
+
+def test_numeric_and_easter_prefixed_named_references(tmp_path: Path) -> None:
+    """Resolve names with extra text while preserving complete literals.
+
+    Args:
+        tmp_path (Path): Temporary directory for the JSON configuration.
+    """
+    config: dict[str, object] = {
+        "include_defaults": False,
+        "bank_holidays": False,
+        "seasonal_fallbacks": False,
+        "rules": {
+            "7/14 anniversary": "7/14",
+            "Anniversary alias": "7/14 anniversary",
+            "Day after": "7/14 anniversary+1d",
+            "Easter+1d event": "easter+2d",
+            "Easter+1d event plus": "Easter+1d event+1d",
+            "Following Easter event": "Easter+1d event plus+1d",
+            "7/14+1d": "7/14+1d",
+            "Easter+1d": "Easter+1d",
+        },
+    }
+    rules = _load(tmp_path, config)
+
+    assert "7/14 anniversary" in rules.events_on(date(2024, 7, 14))
+    assert "Anniversary alias" in rules.events_on(date(2024, 7, 14))
+    assert "Day after" in rules.events_on(date(2024, 7, 15))
+    assert "Easter+1d event" in rules.events_on(date(2024, 4, 2))
+    assert "Easter+1d event plus" in rules.events_on(date(2024, 4, 3))
+    assert "Following Easter event" in rules.events_on(date(2024, 4, 4))
+    assert "7/14+1d" in rules.events_on(date(2024, 7, 15))
+    assert "Easter+1d" in rules.events_on(date(2024, 4, 1))
+
+    excluded = _load(
+        tmp_path,
+        {**config, "exclude": ["Day after", "Following Easter event"]},
+    )
+    assert "Day after" not in excluded.events_on(date(2024, 7, 15))
+    assert "Following Easter event" not in excluded.events_on(date(2024, 4, 4))
+
+
+@pytest.mark.parametrize(
+    ("entries", "expected_day", "displaced_day", "expected_names"),
+    [
+        pytest.param(
+            {"12/25": "7/4"},
+            date(2024, 12, 25),
+            date(2024, 7, 4),
+            {"Christmas Day"},
+            id="bundled-christmas",
+        ),
+        pytest.param(
+            {"Easter+1d": "7/4", "Ordinary Easter Monday": "Easter+1d"},
+            date(2024, 4, 1),
+            date(2024, 7, 4),
+            {"Easter Monday", "Ordinary Easter Monday"},
+            id="bundled-and-custom-easter",
+        ),
+        pytest.param(
+            {"7/14": "Alias", "Alias": "7/14"},
+            date(2024, 7, 14),
+            date(2024, 8, 1),
+            {"7/14", "Alias"},
+            id="literal-breaks-false-cycle",
+        ),
+        pytest.param(
+            {"7/14": "8/1", "7/14+1d": "7/14+1d"},
+            date(2024, 7, 15),
+            date(2024, 8, 2),
+            {"7/14+1d"},
+            id="self-named-offset-literal",
+        ),
+        pytest.param(
+            {"7/14+1d": "8/1", "Day after": "7/14+1d+1d"},
+            date(2024, 7, 16),
+            date(2024, 8, 2),
+            {"Day after"},
+            id="literal-before-longest-named-base",
+        ),
+    ],
+)
+def test_complete_literals_take_precedence_over_rule_names(
+    tmp_path: Path,
+    entries: dict[str, str],
+    expected_day: date,
+    displaced_day: date,
+    expected_names: set[str],
+) -> None:
+    """Keep literal dates stable when custom names collide with expressions.
+
+    Args:
+        tmp_path (Path): Temporary directory for the JSON configuration.
+        entries (dict[str, str]): Custom rules containing literal-shaped names.
+        expected_day (date): Date required by the literal expression.
+        displaced_day (date): Date produced by incorrectly resolving a name.
+        expected_names (set[str]): Events that must retain their literal dates.
+    """
+    rules = _load(tmp_path, {"rules": entries})
+
+    assert expected_names <= set(rules.events_on(expected_day))
+    assert expected_names.isdisjoint(rules.events_on(displaced_day))

@@ -229,44 +229,46 @@ def _parse_expression(name: str, expression: str, rules: dict[str, str]) -> _Exp
     value = expression.strip()
     kind: str
     base: int | str | tuple[int, int]
-    suffix = ""
+    literal_error: RuleError | None = None
 
-    fixed = _DATE_BASE.match(value)
-    if fixed:
-        month, day = int(fixed.group(1)), int(fixed.group(2))
-        try:
-            date(2000, month, day)  # Leap-day expressions are valid in leap anchor years.
-        except ValueError as error:
-            raise RuleError(f"rule {name!r} has invalid fixed date {fixed.group(0)!r}") from error
-        kind, base, suffix = "fixed", (month, day), value[fixed.end() :]
-    elif (
-        value.casefold() == "easter"
-        or value.casefold().startswith("easter+")
-        or value.casefold().startswith("easter-")
-    ):
-        kind, base, suffix = "easter", 0, value[6:]
-    else:
-        references = sorted(rules, key=len, reverse=True)
-        reference = next(
-            (
-                candidate
-                for candidate in references
-                if value.startswith(candidate)
-                and (
-                    len(value) == len(candidate)
-                    or value[len(candidate) :].lstrip().startswith(("+", "-"))
-                )
-            ),
-            None,
-        )
-        if reference is None:
-            raise RuleError(
-                f"rule {name!r} has unknown base or named rule reference in {expression!r}"
+    # A complete valid literal keeps its meaning even when a rule has the
+    # same name. A literal prefix alone does not reserve the rest of a name.
+    try:
+        if (fixed := _DATE_BASE.match(value)) is not None:
+            month, day = int(fixed.group(1)), int(fixed.group(2))
+            try:
+                date(2000, month, day)  # Allow leap days in leap anchor years.
+            except ValueError as error:
+                raise RuleError(
+                    f"rule {name!r} has invalid fixed date {fixed.group(0)!r}"
+                ) from error
+            kind, base, suffix = "fixed", (month, day), value[fixed.end() :]
+            return _Expression(kind, base, _parse_offsets(name, suffix))
+        if value.casefold().startswith("easter"):
+            return _Expression("easter", 0, _parse_offsets(name, value[6:]))
+    except RuleError as error:
+        # Names such as "7/14 anniversary" can still match below. If none
+        # does, preserve the more useful literal validation error.
+        literal_error = error
+
+    references = sorted(rules, key=len, reverse=True)
+    reference = next(
+        (
+            candidate
+            for candidate in references
+            if value.startswith(candidate)
+            and (
+                len(value) == len(candidate)
+                or value[len(candidate) :].lstrip().startswith(("+", "-"))
             )
-        kind, base, suffix = "reference", reference, value[len(reference) :]
-
-    offsets = _parse_offsets(name, suffix)
-    return _Expression(kind, base, offsets)
+        ),
+        None,
+    )
+    if reference is not None:
+        return _Expression("reference", reference, _parse_offsets(name, value[len(reference) :]))
+    if literal_error is not None:
+        raise literal_error
+    raise RuleError(f"rule {name!r} has unknown base or named rule reference in {expression!r}")
 
 
 def _parse_offsets(name: str, suffix: str) -> tuple[_Offset, ...]:
@@ -437,14 +439,10 @@ def _bank_holidays_on(day: date) -> list[str]:
     events: list[str] = []
     if day.month == 12 and day.day in (26, 27, 28):
         christmas = date(day.year, 12, 25)
-        if (christmas.weekday() == 5 and day.day == 27) or (
-            christmas.weekday() == 6 and day.day == 26
-        ):
+        if christmas.weekday() in (5, 6) and day.day == 27:
             events.append("Christmas Day Bank Holiday")
-        if (
-            (christmas.weekday() == 5 and day.day == 28)
-            or (christmas.weekday() == 6 and day.day == 27)
-            or (christmas.weekday() == 4 and day.day == 28)
+        if (christmas.weekday() == 5 and day.day == 28) or (
+            christmas.weekday() == 4 and day.day == 28
         ):
             events.append("Boxing Day Bank Holiday")
     if day.month == 1:
