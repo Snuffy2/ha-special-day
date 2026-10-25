@@ -36,7 +36,7 @@ The integration supports one configuration and creates two entities:
 | Entity | What it shows |
 | --- | --- |
 | `binary_sensor.special_day` | `on` when one or more occasions apply today; otherwise `off` |
-| `sensor.special_day_next_special_day` | Days until the next special day strictly after today |
+| `sensor.special_day_next_special_day` | Date of the next special day strictly after today |
 
 Home Assistant may choose different entity IDs if these names are already in
 use. Existing installations retain their registered entity IDs when a sensor
@@ -47,20 +47,23 @@ name changes. The binary sensor has these attributes:
 - `last_checked`: when the integration last checked the date and calendars.
 - `calendar_errors`: calendar entity IDs that could not be read on the latest check.
 
-The next special day sensor always skips today: its state is a positive number of
-days, or `unknown` if no future holiday is known. Its attributes include `name`,
-`date` (the actual ISO date, `YYYY-MM-DD`), `days_until`, `weekday`, and `source`
-(`rule` or `calendar`). Calendar holidays also include `calendar_entity_id` and
-`end_date` (exclusive). All details are individual sensor attributes. If several
-holidays share the next date, the first ordered by name supplies the details.
+The next special day sensor always skips today. It uses Home Assistant's `date`
+device class: its state is a date-only `YYYY-MM-DD` value, or `unknown` if no
+future special day is known. It has no time, timezone, or unit of measurement.
+The `days_until` attribute is the positive number of days remaining, or `null`
+when no date is known. Other attributes include `name`, `weekday`, and `source`
+(`rule` or `calendar`). Calendar occasions also include `calendar_entity_id` and
+`end_date` (exclusive). All details are individual sensor attributes; the state
+supplies the date, so there is no duplicate `date` attribute. If several
+occasions share the next date, the first ordered by name supplies the details.
 The sensor also has `last_checked` and `calendar_errors` attributes.
 
-Both the countdown and holiday lookup use named rules and selected all-day
+The date sensor and holiday lookup use named rules and selected all-day
 calendar events. Annual rules are searched up to eight years ahead, including
 leap-day gaps across a non-leap century. Calendars are searched through the next
 366 days. Daily Lent and Advent fallback labels only appear on the binary
 sensor. An ongoing calendar event still applies to today's binary sensor, but
-its start date is past and it does not count as a future holiday.
+its start date is past and it does not count as a future special day.
 
 The integration checks at setup, local midnight, and every 15 minutes. You do
 not need a helper or a daily automation to keep the entities current.
@@ -87,7 +90,7 @@ data such as:
 }
 ```
 
-Unlike the countdown sensor, lookup includes today: requesting today's holiday
+Unlike the next special day sensor, lookup includes today: requesting today's holiday
 returns `days_until: 0`. A date that has passed returns the next occurrence.
 Calendar results also include `calendar_entity_id` and the exclusive `end_date`.
 If names match more than one occasion, the earliest occurrence wins. A name

@@ -1,9 +1,9 @@
-"""Days until the next special day after today."""
+"""The date of the next special day after today."""
 
+from datetime import date
 from typing import Any
 
-from homeassistant.components.sensor import SensorEntity
-from homeassistant.const import UnitOfTime
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
@@ -16,7 +16,7 @@ async def async_setup_entry(
     entry: SpecialDayConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Create the next special day countdown entity automatically.
+    """Create the next special day date entity automatically.
 
     Args:
         hass (HomeAssistant): Home Assistant instance.
@@ -28,22 +28,22 @@ async def async_setup_entry(
 
 
 class SpecialDaySensor(SpecialDayEntity, SensorEntity):
-    """Count down to the next strictly future special day."""
+    """Show the date of the next strictly future special day."""
 
     _attr_name = "Next special day"
-    _attr_native_unit_of_measurement = UnitOfTime.DAYS
+    _attr_device_class = SensorDeviceClass.DATE
 
     @property
-    def native_value(self) -> int | None:
-        """Return the days until the next special day strictly after today.
+    def native_value(self) -> date | None:
+        """Return the date of the next special day strictly after today.
 
         Returns:
-            int | None: Positive number of days, or None when no special day is known.
+            date | None: Next special day date, or None when no future date is known.
         """
         data = self.coordinator.data
         if not data.next_holidays:
             return None
-        return (data.next_holidays[0].day - data.checked.date()).days
+        return data.next_holidays[0].day
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
@@ -56,8 +56,9 @@ class SpecialDaySensor(SpecialDayEntity, SensorEntity):
         holiday = (
             data.next_holidays[0].as_dict(data.checked.date())
             if data.next_holidays
-            else {"name": None, "date": None}
+            else {"name": None, "days_until": None}
         )
+        holiday.pop("date", None)
         return {
             **holiday,
             "last_checked": data.checked.isoformat(),
