@@ -7,10 +7,22 @@ entities in a dashboard or in your own automations.
 
 ## Install and set up
 
-For a manual install, copy the `custom_components/ha_special_day` folder from
-this project into `/config/custom_components/ha_special_day` on your Home
-Assistant system. Restart Home Assistant, then go to **Settings → Devices &
-services → Add integration** and search for **ha-special-day**.
+Install this integration through [HACS](https://www.hacs.xyz/) (Home Assistant
+Community Store). HACS must already be installed and set up in Home Assistant.
+
+1. Open **HACS** from the Home Assistant sidebar.
+2. Open the three-dot menu in the top-right corner and select **Custom
+   repositories**.
+3. Enter `https://github.com/Snuffy2/ha-special-day` as the repository URL.
+4. Select **Integration** as the type, then select **Add**.
+5. Close the custom repositories window and search HACS for **ha-special-day**.
+6. Open its page, select **Download**, and confirm the download in the dialog.
+7. Restart Home Assistant.
+8. Go to **Settings → Devices & services → Add integration** and search for
+   **ha-special-day** to complete setup.
+
+For screenshots of the custom repository steps, see the
+[HACS custom repository guide](https://www.hacs.xyz/docs/faq/custom_repositories/).
 
 During setup, leave **Personal rules file** blank to use the built-in dates. To
 use your own dates, first create a JSON file inside your Home Assistant config
