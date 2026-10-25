@@ -225,13 +225,13 @@ async def test_calendar_recovery_and_full_description(
 
 
 @pytest.mark.parametrize("timezone", ["America/New_York", "UTC", "Pacific/Kiritimati"])
-async def test_next_holiday_selects_first_tied_holiday(
+async def test_next_holiday_combines_tied_occasions(
     hass: HomeAssistant,
     rules_file: Path,
     freezer: FrozenDateTimeFactory,
     timezone: str,
 ) -> None:
-    """Expose individual details for the first holiday on the earliest future date.
+    """Combine all names on the earliest future date and retain the first occasion details.
 
     Args:
         hass (HomeAssistant): Home Assistant instance.
@@ -248,7 +248,7 @@ async def test_next_holiday_selects_first_tied_holiday(
                 "include_defaults": False,
                 "bank_holidays": False,
                 "seasonal_fallbacks": False,
-                "rules": {"Rule party": "10/25"},
+                "rules": {"Rule party": "10/25", "Calendar party": "10/25"},
             }
         ),
     )
@@ -276,7 +276,8 @@ async def test_next_holiday_selects_first_tied_holiday(
     assert next_holiday.attributes["weekday"] == "Sunday"
     assert next_holiday.attributes["source"] == "calendar"
     assert next_holiday.attributes["calendar_entity_id"] == "calendar.family"
-    assert next_holiday.attributes["name"] == "Calendar party"
+    assert next_holiday.attributes["name"] == "Calendar party and Rule party"
+    assert next_holiday.attributes["events"] == ["Calendar party", "Rule party"]
     assert next_holiday.attributes["end_date"] == "2026-10-26"
     assert "holidays" not in next_holiday.attributes
 
@@ -318,7 +319,8 @@ async def test_next_holiday_unknown_when_rules_are_empty(
 
     empty_sensor = hass.states.get("sensor.special_day_next_special_day")
     assert empty_sensor.state == "unknown"
-    assert empty_sensor.attributes["name"] is None
+    assert empty_sensor.attributes["name"] == ""
+    assert empty_sensor.attributes["events"] == []
     assert empty_sensor.attributes["days_until"] is None
     assert "date" not in empty_sensor.attributes
     assert "holidays" not in empty_sensor.attributes

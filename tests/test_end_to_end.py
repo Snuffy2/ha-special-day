@@ -105,6 +105,7 @@ async def test_personal_rules_user_journey(
     assert next_holiday["state"] == "2027-10-24"
     assert next_holiday["attributes"]["days_until"] == 365
     assert next_holiday["attributes"]["name"] == "Our anniversary"
+    assert next_holiday["attributes"]["events"] == ["Our anniversary"]
     assert next_holiday["attributes"]["device_class"] == "date"
     assert "date" not in next_holiday["attributes"]
     assert "unit_of_measurement" not in next_holiday["attributes"]

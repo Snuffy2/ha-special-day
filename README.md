@@ -54,8 +54,12 @@ The `days_until` attribute is the positive number of days remaining, or `null`
 when no date is known. Other attributes include `name`, `weekday`, and `source`
 (`rule` or `calendar`). Calendar occasions also include `calendar_entity_id` and
 `end_date` (exclusive). All details are individual sensor attributes; the state
-supplies the date, so there is no duplicate `date` attribute. If several
-occasions share the next date, the first ordered by name supplies the details.
+supplies the date, so there is no duplicate `date` attribute. The `events`
+attribute lists all unique occasion names on the next date in alphabetical
+order. The `name` attribute combines them into readable text, just like the
+binary sensor (for example, `Anniversary and Birthday`). When no future date
+is known, `events` is empty and `name` is an empty string. If several occasions
+share the next date, the first ordered by name supplies the remaining details.
 The sensor also has `last_checked` and `calendar_errors` attributes.
 
 The date sensor and holiday lookup use named rules and selected all-day
