@@ -240,7 +240,7 @@ async def test_local_calendar_user_journey(
     assert next_holiday["attributes"]["days_until"] == 3
     assert next_holiday["attributes"]["name"] == "Future trip"
     assert "date" not in next_holiday["attributes"]
-    assert next_holiday["attributes"]["source"] == "calendar"
+    assert "source" not in next_holiday["attributes"]
     assert next_holiday["attributes"]["calendar_entity_id"] == "calendar.family"
 
     response = await user_client.post(

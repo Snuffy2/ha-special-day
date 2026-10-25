@@ -124,7 +124,7 @@ async def test_calendar_merge(
     assert next_holiday.attributes["friendly_name"] == "Special Day Next special day"
     assert next_holiday.attributes["name"] == "Test Day"
     assert "date" not in next_holiday.attributes
-    assert next_holiday.attributes["source"] == "rule"
+    assert "source" not in next_holiday.attributes
     # A multi-day calendar event that started before today stays on the binary
     # sensor, but it is not a future holiday for the countdown sensor.
     assert "holidays" not in next_holiday.attributes
@@ -274,7 +274,7 @@ async def test_next_holiday_combines_tied_occasions(
     assert "unit_of_measurement" not in next_holiday.attributes
     assert next_holiday.attributes["days_until"] == 1
     assert next_holiday.attributes["weekday"] == "Sunday"
-    assert next_holiday.attributes["source"] == "calendar"
+    assert "source" not in next_holiday.attributes
     assert next_holiday.attributes["calendar_entity_id"] == "calendar.family"
     assert next_holiday.attributes["name"] == "Calendar party and Rule party"
     assert next_holiday.attributes["events"] == ["Calendar party", "Rule party"]
