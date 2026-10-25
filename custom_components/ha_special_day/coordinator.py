@@ -87,6 +87,20 @@ class Holiday:
         return details
 
 
+def format_event_names(events: list[str]) -> str:
+    """Join occasion names into readable text.
+
+    Args:
+        events (list[str]): Occasion names in display order.
+
+    Returns:
+        str: All occasion names joined with commas and a final conjunction.
+    """
+    if len(events) < 2:
+        return "".join(events)
+    return ", ".join(events[:-1]) + " and " + events[-1]
+
+
 @dataclass(frozen=True)
 class SpecialDayData:
     """Today's occasions and the known upcoming holiday dates."""
@@ -104,9 +118,7 @@ class SpecialDayData:
         Returns:
             str: Complete human-readable description.
         """
-        if len(self.events) < 2:
-            return "".join(self.events)
-        return ", ".join(self.events[:-1]) + " and " + self.events[-1]
+        return format_event_names(self.events)
 
 
 class SpecialDayCoordinator(DataUpdateCoordinator[SpecialDayData]):

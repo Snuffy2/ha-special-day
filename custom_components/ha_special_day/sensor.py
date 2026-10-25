@@ -8,6 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import SpecialDayConfigEntry
+from .coordinator import format_event_names
 from .entity import SpecialDayEntity
 
 
@@ -53,14 +54,17 @@ class SpecialDaySensor(SpecialDayEntity, SensorEntity):
             dict[str, Any]: Next special day details and calendar read errors.
         """
         data = self.coordinator.data
+        events = list(dict.fromkeys(holiday.name for holiday in data.next_holidays))
         holiday = (
             data.next_holidays[0].as_dict(data.checked.date())
             if data.next_holidays
-            else {"name": None, "days_until": None}
+            else {"days_until": None}
         )
         holiday.pop("date", None)
         return {
             **holiday,
+            "events": events,
+            "name": format_event_names(events),
             "last_checked": data.checked.isoformat(),
             "calendar_errors": data.calendar_errors,
         }
