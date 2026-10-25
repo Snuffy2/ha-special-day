@@ -1211,6 +1211,7 @@ source = { virtual = "." }
 [package.dev-dependencies]
 dev = [
     { name = "homeassistant" },
+    { name = "ical" },
     { name = "mypy" },
     { name = "prek" },
     { name = "pytest" },
@@ -1249,6 +1250,7 @@ lint = [
 ]
 pytest = [
     { name = "homeassistant" },
+    { name = "ical" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
@@ -1261,6 +1263,7 @@ pytest = [
 [package.metadata.requires-dev]
 dev = [
     { name = "homeassistant", specifier = ">=2026.3.0" },
+    { name = "ical", specifier = "==14.3.0" },
     { name = "mypy" },
     { name = "prek" },
     { name = "pytest", specifier = ">=9" },
@@ -1297,6 +1300,7 @@ lint = [
 ]
 pytest = [
     { name = "homeassistant", specifier = ">=2026.3.0" },
+    { name = "ical", specifier = "==14.3.0" },
     { name = "pytest", specifier = ">=9" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
@@ -1479,6 +1483,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b1/df/48c586a5fe32a0f01324ee087459e112ebb7224f646c0b5023f5e79e9956/httpx-0.28.1.tar.gz", hash = "sha256:75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc", size = 141406, upload-time = "2024-12-06T15:37:23.222Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/2a/39/e50c7c3a983047577ee07d2a9e53faf5a69493943ec3f6a384bdc792deb2/httpx-0.28.1-py3-none-any.whl", hash = "sha256:d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad", size = 73517, upload-time = "2024-12-06T15:37:21.509Z" },
+]
+
+[[package]]
+name = "ical"
+version = "14.3.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "python-dateutil" },
+    { name = "tzdata" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/15/e6/1b82fa09fd4b245305f63e112796edaab3786aa1ed1ea85ed9adbf02b956/ical-14.3.0.tar.gz", hash = "sha256:6d6165d6d1d6449a3f1cb6e437f2c7ba8794e31e6a0c3162419a82b3e7e7ce76", size = 161006, upload-time = "2026-10-04T22:39:30.363Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/5a/ca/252019163a2186c95e455f06724f1b4381cfbb5935171bfd31425edab123/ical-14.3.0-py3-none-any.whl", hash = "sha256:40efd0c7d2a14f95c99fd287fa2a65807226f4671b40055f401568ceeb8cb3e4", size = 146707, upload-time = "2026-10-04T22:39:28.775Z" },
 ]
 
 [[package]]

@@ -54,6 +54,9 @@ resolved.
 - `tests/test_rules.py` checks date calculations and personal rule files.
   `tests/test_integration.py` exercises setup, entities, reloads, calendars,
   and unloading through Home Assistant.
+- `tests/test_end_to_end.py` follows user journeys through authenticated Home
+  Assistant HTTP APIs: setup, rule reload failure and recovery, Configure,
+  removal, and real Local Calendar events discovered by scheduled refreshes.
 
 These paths are inside `custom_components/ha_special_day` unless a different
 directory is shown. Keep constants in `const.py`, add type annotations to new
@@ -89,6 +92,12 @@ For manual testing, use a separate development Home Assistant instance. Check
 setup and options, entity states and attributes, the
 `ha_special_day.reload_rules` action, and the logs. Keep personal rules files
 outside the integration directory.
+
+Run `./.venv/bin/pytest tests/test_end_to_end.py` to exercise the HTTP user
+journeys on an isolated test instance. These tests use the real config flows,
+services, entity platforms, and Local Calendar integration; they do not drive
+a browser or connect to your running Home Assistant. The `pytest` dependency
+group includes the library required by Local Calendar for this coverage.
 
 ## Pull requests and releases
 
