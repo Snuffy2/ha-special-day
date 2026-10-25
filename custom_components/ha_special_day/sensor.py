@@ -61,6 +61,7 @@ class SpecialDaySensor(SpecialDayEntity, SensorEntity):
             else {"days_until": None}
         )
         holiday.pop("date", None)
+        holiday.pop("source", None)
         return {
             **holiday,
             "events": events,

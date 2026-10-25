@@ -51,8 +51,8 @@ The next special day sensor always skips today. It uses Home Assistant's `date`
 device class: its state is a date-only `YYYY-MM-DD` value, or `unknown` if no
 future special day is known. It has no time, timezone, or unit of measurement.
 The `days_until` attribute is the positive number of days remaining, or `null`
-when no date is known. Other attributes include `name`, `weekday`, and `source`
-(`rule` or `calendar`). Calendar occasions also include `calendar_entity_id` and
+when no date is known. Other attributes include `name` and `weekday`.
+Calendar occasions also include `calendar_entity_id` and
 `end_date` (exclusive). All details are individual sensor attributes; the state
 supplies the date, so there is no duplicate `date` attribute. The `events`
 attribute lists all unique occasion names on the next date in alphabetical
